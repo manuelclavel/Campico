@@ -28,19 +28,34 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
-import kotlinx.serialization.serializer
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Navigator(
     navController: NavHostController,
-    dao : CampicoDao
+    dao: CampicoDao,
+    networkService: NetworkService
 ) {
     var message by remember { mutableStateOf("") }
 
+    val changeMessage = fun(text: String) {
+        message = text
+    }
+
     val navigateBack = fun(){
         navController.navigateUp()
+    }
+
+    val navigateToHome = fun() {
+        navController.navigate(HomeRoute)
+    }
+
+    val navigateToLogin = fun() {
+        navController.navigate(LoginRoute)
+    }
+    val navigateToToken = fun(email:String) {
+        navController.navigate(TokenRoute(email))
     }
     val navigateToSearchTrees : () -> Unit = {
         navController.navigate(SearchTreesRoute)
@@ -88,7 +103,7 @@ fun Navigator(
         }
     }
 
-    // wrong
+    // wrongchangeMessage
     //suspend fun getTrees(): List<Tree> {
     //    return dao.getTrees()
     //}
@@ -201,15 +216,35 @@ fun Navigator(
             // HOME
             composable<HomeRoute> {
                 HomeScreen(
-                    changeMessage = {},
+                    changeMessage = changeMessage,
                     navigateToSearchTrees = navigateToSearchTrees,
-                    navigateToAddTree = navigateToAddTree
+                    navigateToAddTree = navigateToAddTree,
+                    navigateToLogin = navigateToLogin,
+                    networkService = networkService
+                )
+            }
+            // TOKEN
+            composable<TokenRoute> {
+                    backStackEntry ->
+                val tokenRoute : TokenRoute = backStackEntry.toRoute()
+                TokenScreen(
+                    changeMessage = changeMessage ,
+                    navigateToHome = navigateToHome,
+                    email = tokenRoute.email
+                )
+            }
+            // LOGIN
+            composable<LoginRoute> {
+                LoginScreen(
+                    changeMessage = changeMessage,
+                    networkService = networkService,
+                    navigateToToken = navigateToToken,
                 )
             }
             // SEARCH TREES
             composable<SearchTreesRoute> {
                 SearchTreesScreen(
-                    changeMessage = {},
+                    changeMessage = changeMessage,
                     getTrees = getTrees,
                     navigateToTreeDisplay = navigateToTreeDisplay,
                     getTotalFruitsByTreeUid = getTotalFruitsByTreeUid
@@ -218,7 +253,7 @@ fun Navigator(
             // ADD TREE
             composable<AddTreeRoute> {
                 AddTreeScreen(
-                    changeMessage = {},
+                    changeMessage = changeMessage,
                     insertTree = insertTree
                 )
             }
@@ -230,7 +265,7 @@ fun Navigator(
                     uid = tree.uid,
                     getTreeByUid = getTreeByUid,
                     deleteTree = deleteTree,
-                    changeMessage = {},
+                    changeMessage = changeMessage,
                     navigateToEditTree = navigateToEditTree,
                     navigateBack = navigateBack,
                     navigateToSearchFruitsByTree = navigateToSearchFruitsByTree,
@@ -245,7 +280,7 @@ fun Navigator(
                     uid = tree.uid,
                     getTreeByUid = getTreeByUid,
                     updateTree = updateTree,
-                    changeMessage = {}
+                    changeMessage = changeMessage
                 )
             }
             // SEARCH FRUITS BY TREE
@@ -254,7 +289,7 @@ fun Navigator(
                 val tree : SearchFruitsByTreeRoute = backStackEntry.toRoute()
                 SearchFruitsByTreeScreen(
                     uidTree = tree.uid,
-                    changeMessage = { } ,
+                    changeMessage = changeMessage,
                     getFruitsByTreeUid = getFruitsByTreeUid,
                     navigateToFruitDisplay = navigateToFruitDisplay
                 )
@@ -265,7 +300,7 @@ fun Navigator(
                 val tree : AddFruitByTreeRoute = backStackEntry.toRoute()
                 AddFruitByTreeScreen(
                     uidTree = tree.uid,
-                    changeMessage = {},
+                    changeMessage = changeMessage,
                     insertFruitByTree = insertFruitByTree
                 )
             }
@@ -277,7 +312,7 @@ fun Navigator(
                     uid = fruit.uid,
                     getFruitByUid = getFruitByUid,
                     deleteFruit = deleteFruit,
-                    changeMessage = {},
+                    changeMessage = changeMessage,
                     navigateToEditFruit = navigateToEditFruit,
                     navigateBack = navigateBack
                 )
@@ -290,7 +325,7 @@ fun Navigator(
                     uid = fruit.uid,
                     getFruitByUid = getFruitByUid,
                     updateFruit = updateFruit,
-                    changeMessage = {}
+                    changeMessage = changeMessage
                 )
             }
         }

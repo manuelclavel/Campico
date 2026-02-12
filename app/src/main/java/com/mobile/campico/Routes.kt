@@ -6,6 +6,12 @@ import kotlinx.serialization.Serializable
 object HomeRoute
 
 @Serializable
+object LoginRoute
+
+
+@Serializable
+data class TokenRoute(val email: String)
+@Serializable
 object AddTreeRoute
 
 
