@@ -22,9 +22,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import kotlinx.serialization.serializer
 
@@ -154,17 +156,21 @@ fun Navigator(
                 title = {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "Teaching Mobile 26"
+                            text = "El Campico"
                         )
                     }
                 },
                 navigationIcon = {
-                    Button(
-                        modifier = Modifier.semantics { contentDescription = "navigateBack" },
-                        onClick = {
-                            navController.navigateUp()
-                        }) {
-                        Text("Back")
+                    val currentRouteIsHome =
+                        navController.currentBackStackEntryAsState().value?.destination?.hasRoute<HomeRoute>()
+                    if (currentRouteIsHome == false) {
+                        Button(
+                            modifier = Modifier.semantics { contentDescription = "navigateBack" },
+                            onClick = {
+                                navController.navigateUp()
+                            }) {
+                            Text("Back")
+                        }
                     }
 
                 }

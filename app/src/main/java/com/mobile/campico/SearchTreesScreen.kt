@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -41,7 +42,7 @@ fun NumberFruitsByTreeUidCell(uidTree: Int,
 
     // The UI displays the current state (initially "Loading...", then the fetched data)
     Text(
-        text = cellValue
+        text = cellValue, modifier = Modifier.width(50.dp)
     )
 }
 @Composable
@@ -66,13 +67,13 @@ fun TreeList(
                     Modifier.padding(6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp) )
                 {
-                    Text(text= "Id", fontWeight = FontWeight.Bold)
+                    Text(text= "Id", modifier = Modifier.width(50.dp), fontWeight = FontWeight.Bold)
                     VerticalDivider(
                         modifier = Modifier.padding(horizontal = 8.dp), // Add horizontal padding for spacing
                         thickness = 1.dp,
                         color = Color.DarkGray // Customize the color
                     )
-                    Text(text = "# Fruits", fontWeight = FontWeight.Bold)
+                    Text(text = "# Fruits", modifier = Modifier.width(70.dp), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -95,7 +96,7 @@ fun TreeList(
                     Modifier.padding(6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp) )
                 {
-                    Text(tree.id)
+                    Text(text= tree.id, modifier = Modifier.width(50.dp))
                     VerticalDivider(
                         modifier = Modifier.padding(horizontal = 8.dp), // Add horizontal padding for spacing
                         thickness = 1.dp,
