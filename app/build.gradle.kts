@@ -19,6 +19,10 @@ android {
         versionName = "1.0"
         //testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner
     }
+    buildFeatures {
+        //dataBinding = true
+        viewBinding = true
+    }
     //testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner
 }
 
@@ -43,6 +47,8 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.lifecycle)
     //implementation(libs.androidx.compose.ui.test)
     testImplementation(libs.junit)
 // For local unit tests
@@ -86,4 +92,19 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     // Alternatively - without an Android dependency.
     implementation(libs.androidx.datastore.preferences.core)
+    // barcode
+    // ML Kit Barcode Scanning
+    implementation(libs.mlkit.barcode.scanning)
+    implementation(libs.camera.mlkit.vision)
+
+// CameraX dependencies for camera integration
+    implementation(libs.androidx.camera.core)
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.lifecycle)
+    implementation(libs.camera.view)
+
+// Accompanist Permissions for handling runtime permissions
+    implementation(libs.accompanistPermissions)
+    // layout
+    implementation(libs.androidx.constraintlayout)
 }

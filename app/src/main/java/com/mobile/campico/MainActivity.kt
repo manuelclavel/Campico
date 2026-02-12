@@ -1,18 +1,27 @@
 package com.mobile.campico
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Size
+import android.view.View
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.compose.rememberNavController
+
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import com.mobile.campico.ui.theme.CampicoTheme
+
+
+
 
 //The Preferences DataStore implementation uses the DataStore and Preferences classes to persist key-value pairs to disk.
 //Use the property delegate created by preferencesDataStore to create an instance of DataStore<Preferences>.
@@ -29,9 +38,11 @@ val Context.dataStore by preferencesDataStore(
 val TOKEN = stringPreferencesKey("token")
 val EMAIL = stringPreferencesKey("email")
 
-class MainActivity : ComponentActivity() {
+class MainActivity: ComponentActivity()
+{
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
@@ -84,6 +95,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }
 
 
