@@ -1,17 +1,21 @@
 package com.mobile.campico
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,33 +25,84 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
+fun NumberFruitsByTreeUidCell(uidTree: Int,
+                           getTotalFruitsByTreeUid: suspend (Int) -> Int) {
+    var cellValue by remember { mutableStateOf("") }
+
+    // Use LaunchedEffect to run the suspend function safely
+    LaunchedEffect(Unit) {
+        // This runs in a coroutine
+        cellValue = getTotalFruitsByTreeUid(uidTree).toString()
+    }
+
+    // The UI displays the current state (initially "Loading...", then the fetched data)
+    Text(
+        text = cellValue
+    )
+}
+@Composable
 fun TreeList(
     navigateToTreeDisplay: (Tree) -> Unit,
-    trees: List<Tree>
+    trees: List<Tree>,
+    getTotalFruitsByTreeUid: suspend (Int) -> Int
 ) {
     LazyColumn(
         modifier = Modifier.padding(16.dp)
     ) {
+        stickyHeader {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.LightGray)
+                    .padding(6.dp)
+                    .height(IntrinsicSize.Min) // Key modifier for vertical divider height
+
+            ) {
+                Row(modifier =
+                    Modifier.padding(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                {
+                    Text(text= "Id", fontWeight = FontWeight.Bold)
+                    VerticalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp), // Add horizontal padding for spacing
+                        thickness = 1.dp,
+                        color = Color.DarkGray // Customize the color
+                    )
+                    Text(text = "# Fruits", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
         items(
             items = trees,
-            key = { tree -> tree.uid}
+            key = { tree -> tree.uid }
         ) { tree ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(width = 1.dp, color = Color.LightGray)
                     .padding(6.dp)
+                    .height(IntrinsicSize.Min) // Key modifier for vertical divider height
                     .clickable(onClick = {
                         navigateToTreeDisplay(tree)
                     }
                     )
             ) {
-                Column(modifier = Modifier.padding(6.dp))
-                { Text(tree.id) }
-
+                Row(modifier =
+                    Modifier.padding(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                {
+                    Text(tree.id)
+                    VerticalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp), // Add horizontal padding for spacing
+                        thickness = 1.dp,
+                        color = Color.DarkGray // Customize the color
+                    )
+                    NumberFruitsByTreeUidCell(tree.uid, getTotalFruitsByTreeUid)
+                }
             }
         }
     }
@@ -56,6 +111,7 @@ fun TreeList(
 fun SearchTreesScreen(
     changeMessage: (String) -> Unit,
     getTrees: suspend () -> List<Tree>,
+    getTotalFruitsByTreeUid: suspend (Int) -> Int,
     navigateToTreeDisplay: (Tree) -> Unit
 ) {
 
@@ -76,7 +132,8 @@ fun SearchTreesScreen(
         )
         TreeList(
             trees = trees,
-            navigateToTreeDisplay = navigateToTreeDisplay
+            navigateToTreeDisplay = navigateToTreeDisplay,
+            getTotalFruitsByTreeUid = getTotalFruitsByTreeUid
         )
     }
 }

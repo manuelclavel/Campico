@@ -24,24 +24,25 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun ShowTreeScreen(
+fun ShowFruitScreen(
     uid: Int,
-    getTreeByUid: suspend (Int) -> Tree?,
-    deleteTree: suspend (String) -> Unit,
+    getFruitByUid: suspend (Int) -> Fruit?,
+    deleteFruit: suspend (String) -> Unit,
     changeMessage: (String) -> Unit,
     navigateBack: () -> Unit,
-    navigateToEditTree: (Tree?) -> Unit,
-    navigateToAddFruitByTree: (Tree?) -> Unit,
-    navigateToSearchFruitsByTree: (Tree?) -> Unit
+    navigateToEditFruit: (Fruit?) -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var tree: Tree? by remember { mutableStateOf(Tree(uid = 0, "")) }
+    var fruit: Fruit? by remember { mutableStateOf(Fruit(
+        uid = 0, "",
+        uidTree = 0
+    )) }
 
     LaunchedEffect(Unit) {
-        tree = getTreeByUid(uid);
+        fruit = getFruitByUid(uid);
         //changeMessage("Please, select an option.")
     }
-    if (tree == null) {
+    if (fruit == null) {
         //changeMessage("Flash card not found")
     } else {
 
@@ -51,16 +52,23 @@ fun ShowTreeScreen(
             )
             TextField(
                 readOnly = true,
-                value = tree?.id.orEmpty(),
+                value = fruit?.id.orEmpty(),
                 onValueChange = { },
                 modifier = Modifier.semantics { contentDescription = "idField" },
                 label = { Text("id") }
+            )
+            TextField(
+                readOnly = true,
+                value = fruit?.uidTree.toString(),
+                onValueChange = { },
+                modifier = Modifier.semantics { contentDescription = "treeField" },
+                label = { Text("fruit") }
             )
 
             Button(
                 modifier = Modifier.semantics { contentDescription = "Edit" },
                 onClick = {
-                    navigateToEditTree(tree)
+                    navigateToEditFruit(fruit)
                 })
             {
                 Text("Edit")
@@ -70,8 +78,9 @@ fun ShowTreeScreen(
                 onClick = {
                     scope.launch {
                         try {
-                            deleteTree(
-                                tree?.id.orEmpty())
+                            deleteFruit(
+                                fruit?.id.orEmpty()
+                            )
                             navigateBack()
                             //changeMessage("The flash card has been deleted from  your database")
                         } catch (e: SQLiteConstraintException) {
@@ -83,26 +92,6 @@ fun ShowTreeScreen(
                 })
             {
                 Text("Delete")
-            }
-            Button(
-                modifier = Modifier.semantics { contentDescription = "AddFruit" },
-                onClick = {
-                    navigateToAddFruitByTree(tree)
-                }
-            )
-
-            {
-                Text("Add Fruit")
-            }
-            Button(
-                modifier = Modifier.semantics { contentDescription = "SearchFruits" },
-                onClick = {
-                    navigateToSearchFruitsByTree(tree)
-                }
-            )
-
-            {
-                Text("Search Fruits")
             }
         }
     }

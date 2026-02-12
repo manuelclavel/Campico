@@ -20,3 +20,12 @@ data class EditTreeRoute(val uid: Int)
 
 @Serializable
 data class SearchFruitsByTreeRoute(val uid: Int)
+
+@Serializable
+data class AddFruitByTreeRoute(val uid: Int)
+
+@Serializable
+data class ShowFruitRoute(val uid: Int)
+
+@Serializable
+data class EditFruitRoute(val uid: Int)

@@ -24,30 +24,40 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun EditTreeScreen(
+fun EditFruitScreen(
     uid: Int,
-    getTreeByUid: suspend (Int) -> Tree?,
+    getFruitByUid: suspend (Int) -> Fruit?,
     changeMessage: (String) -> Unit,
-    updateTree: suspend (String, String) -> Unit
+    updateFruit: suspend (String, String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var tree: Tree? by remember { mutableStateOf(Tree(uid = 0, "")) }
-    var idTree by rememberSaveable() { mutableStateOf("") }
+    var fruit: Fruit? by remember { mutableStateOf(Fruit(
+        uid = 0, "",
+        uidTree = 0
+    )) }
+    var idFruit by rememberSaveable() { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        tree = getTreeByUid(uid);
-        tree?.let { idTree = it.id.orEmpty() }
+        fruit = getFruitByUid(uid);
+        fruit?.let { idFruit = it.id.orEmpty() }
     }
-    if (tree != null){
+    if (fruit != null){
         //changeMessage("Please, edit the flashcard.")
         Column() {
             Spacer(
                 modifier = Modifier.size(16.dp)
             )
             TextField(
-                value = idTree,
-                onValueChange = { idTree = it },
+                value = fruit?.uidTree.toString(),
+                onValueChange = { idFruit = it },
+                modifier = Modifier.semantics { contentDescription = "treeField" },
+                label = { Text("tree") },
+                readOnly = true
+            )
+            TextField(
+                value = idFruit,
+                onValueChange = { idFruit = it },
                 modifier = Modifier.semantics { contentDescription = "idField" },
                 label = { Text("id") }
             )
@@ -57,9 +67,9 @@ fun EditTreeScreen(
                 onClick = {
                     scope.launch {
                         try {
-                            updateTree(
-                                tree?.id.orEmpty(),
-                                idTree
+                            updateFruit(
+                                fruit?.id.orEmpty(),
+                                idFruit
                             )
                             //changeMessage("The flash card has been successfully updated in your database")
                         } catch (e: SQLiteConstraintException) {

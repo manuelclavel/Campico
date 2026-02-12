@@ -21,16 +21,17 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @Composable
-fun AddTreeScreen(
+fun AddFruitByTreeScreen(
+    uidTree : Int,
     changeMessage: (String) -> Unit,
-    insertTree: suspend (Tree) -> Unit
+    insertFruitByTree: suspend (Fruit) -> Unit
 ) {
     var id by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     //val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        changeMessage("Please, add a flash card.")
+        //changeMessage("Please, add a flash card.")
     }
 
     Column() {
@@ -40,7 +41,7 @@ fun AddTreeScreen(
         TextField(
             value = id,
             onValueChange = { id = it },
-            modifier = Modifier.semantics { contentDescription = "enTextField" },
+            modifier = Modifier.semantics { contentDescription = "idTextField" },
             label = { Text("id") }
         )
         Button(
@@ -48,10 +49,11 @@ fun AddTreeScreen(
             onClick = {
                 scope.launch {
                     try {
-                        insertTree(
-                            Tree(
+                        insertFruitByTree(
+                            Fruit(
                                 uid = 0,
-                                id = id
+                                id = id,
+                                uidTree = uidTree
                             )
                         )
                         id = ""

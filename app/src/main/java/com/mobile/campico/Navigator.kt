@@ -52,7 +52,7 @@ fun Navigator(
                 EditTreeRoute(it))
         }
     }
-    val navigateToShowCard = fun(tree: Tree?) {
+    val navigateToTreeDisplay = fun(tree: Tree?) {
         tree?.uid?.let {
             navController.navigate(
                 ShowTreeRoute(it))
@@ -63,6 +63,26 @@ fun Navigator(
         tree?.uid?.let {
             navController.navigate(
                 SearchFruitsByTreeRoute(it))
+        }
+    }
+    val navigateToAddFruitByTree = fun(tree: Tree?){
+        tree?.uid?.let {
+            navController.navigate(
+                AddFruitByTreeRoute(it))
+        }
+    }
+
+    val navigateToFruitDisplay = fun(fruit: Fruit?) {
+        fruit?.uid?.let {
+            navController.navigate(
+                ShowFruitRoute(it))
+        }
+    }
+
+    val navigateToEditFruit = fun(fruit: Fruit?) {
+        fruit?.uid?.let {
+            navController.navigate(
+                EditFruitRoute(it))
         }
     }
 
@@ -77,7 +97,7 @@ fun Navigator(
 
     val getTreeByUid: suspend (Int) -> Tree? =
         { uid ->
-            dao.findByUid(uid = uid)
+            dao.findTreeByUid(uid = uid)
         }
 
 
@@ -96,10 +116,33 @@ fun Navigator(
                 idNew = idNew)
         }
 
-
-val getFruitsByTreeUid: suspend (Int) -> List<Fruit> = { uidTree ->
+    val getFruitsByTreeUid: suspend (Int) -> List<Fruit> = { uidTree ->
     dao.getFruitsByTreeUid(uidTree = uidTree)
 }
+    val getTotalFruitsByTreeUid: suspend (Int) -> Int = { uidTree ->
+        dao.getTotalFruitsByTreeUid(uidTree = uidTree)
+    }
+
+    val insertFruitByTree: suspend (Fruit) -> Unit = { fruit ->
+        dao.insertAll(fruit)
+    }
+
+    val getFruitByUid: suspend (Int) -> Fruit? =
+        { uid ->
+            dao.findFruitByUid(uid = uid)
+        }
+
+    val deleteFruit: suspend (String) -> Unit = { id ->
+        dao.deleteFruit(id = id)
+    }
+
+    val updateFruit: suspend (String, String) -> Unit =
+        { idOld, idNew->
+            dao.updateFruit(
+                idOld = idOld,
+                idNew = idNew)
+        }
+
 
     Scaffold(
         topBar = {
@@ -162,7 +205,8 @@ val getFruitsByTreeUid: suspend (Int) -> List<Fruit> = { uidTree ->
                 SearchTreesScreen(
                     changeMessage = {},
                     getTrees = getTrees,
-                    navigateToTreeDisplay = navigateToShowCard
+                    navigateToTreeDisplay = navigateToTreeDisplay,
+                    getTotalFruitsByTreeUid = getTotalFruitsByTreeUid
                 )
             }
             // ADD TREE
@@ -183,7 +227,8 @@ val getFruitsByTreeUid: suspend (Int) -> List<Fruit> = { uidTree ->
                     changeMessage = {},
                     navigateToEditTree = navigateToEditTree,
                     navigateBack = navigateBack,
-                    navigateToSearchFruitsByTree = navigateToSearchFruitsByTree
+                    navigateToSearchFruitsByTree = navigateToSearchFruitsByTree,
+                    navigateToAddFruitByTree = navigateToAddFruitByTree
                 )
             }
             // EDIT TREE
@@ -197,7 +242,7 @@ val getFruitsByTreeUid: suspend (Int) -> List<Fruit> = { uidTree ->
                     changeMessage = {}
                 )
             }
-            // EDIT TREE
+            // SEARCH FRUITS BY TREE
             composable<SearchFruitsByTreeRoute>{
                     backStackEntry ->
                 val tree : SearchFruitsByTreeRoute = backStackEntry.toRoute()
@@ -205,7 +250,41 @@ val getFruitsByTreeUid: suspend (Int) -> List<Fruit> = { uidTree ->
                     uidTree = tree.uid,
                     changeMessage = { } ,
                     getFruitsByTreeUid = getFruitsByTreeUid,
-                    navigateToFruitDisplay = {}
+                    navigateToFruitDisplay = navigateToFruitDisplay
+                )
+            }
+            // ADD FRUIT BY TREE
+            composable<AddFruitByTreeRoute>{
+                    backStackEntry ->
+                val tree : AddFruitByTreeRoute = backStackEntry.toRoute()
+                AddFruitByTreeScreen(
+                    uidTree = tree.uid,
+                    changeMessage = {},
+                    insertFruitByTree = insertFruitByTree
+                )
+            }
+            // SHOW Tree
+            composable<ShowFruitRoute>{
+                    backStackEntry ->
+                val fruit : ShowFruitRoute = backStackEntry.toRoute()
+                ShowFruitScreen(
+                    uid = fruit.uid,
+                    getFruitByUid = getFruitByUid,
+                    deleteFruit = deleteFruit,
+                    changeMessage = {},
+                    navigateToEditFruit = navigateToEditFruit,
+                    navigateBack = navigateBack
+                )
+            }
+            // EDIT FRUIT
+            composable<EditFruitRoute>{
+                    backStackEntry ->
+                val fruit : EditFruitRoute = backStackEntry.toRoute()
+                EditFruitScreen(
+                    uid = fruit.uid,
+                    getFruitByUid = getFruitByUid,
+                    updateFruit = updateFruit,
+                    changeMessage = {}
                 )
             }
         }
