@@ -64,6 +64,12 @@ interface CampicoDao {
     suspend fun findTreeByUid(uid: Int): Tree?
 
     @Query(
+        "SELECT * FROM Tree WHERE id LIKE :id LIMIT 1"
+    )
+    suspend fun findTreeById(id: String): Tree?
+
+
+    @Query(
         "UPDATE Tree SET id = :idNew " +
                 "WHERE id = :idOld "
     )
@@ -75,6 +81,11 @@ interface CampicoDao {
         "DELETE FROM Tree WHERE id = :id "
     )
     suspend fun deleteTree(id: String)
+
+    @Query(
+        "SELECT * FROM Fruit WHERE id LIKE :id LIMIT 1"
+    )
+    suspend fun findFruitById(id: String): Fruit?
 
     @Query("SELECT * FROM Fruit WHERE uidTree = :uidTree")
     suspend fun getFruitsByTreeUid(uidTree : Int): List<Fruit>

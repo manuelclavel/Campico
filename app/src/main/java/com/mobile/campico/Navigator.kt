@@ -16,8 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +30,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
-
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +39,12 @@ fun Navigator(
     dao: CampicoDao,
     networkService: NetworkService
 ) {
+    val context = LocalContext.current
+    val appContext = context.applicationContext
+    val scope = rememberCoroutineScope()
+
     var message by remember { mutableStateOf("") }
+
 
     val changeMessage = fun(text: String) {
         message = text
@@ -69,10 +76,34 @@ fun Navigator(
                 EditTreeRoute(it))
         }
     }
+
+    val getTreeById: suspend (String) -> Tree? =
+        { id ->
+            dao.findTreeById(id = id)
+        }
+    val navigateToTreeDisplayById = fun(id:String) {
+        scope.launch {
+            val tree = dao.findTreeById(id)
+            tree?.uid?.let {
+                navController.navigate(
+                    ShowTreeRoute(it))
+            }
+        }
+    }
     val navigateToTreeDisplay = fun(tree: Tree?) {
         tree?.uid?.let {
             navController.navigate(
                 ShowTreeRoute(it))
+        }
+    }
+
+    val navigateToFruitDisplayById = fun(id:String) {
+        scope.launch {
+            val fruit = dao.findFruitById(id)
+            fruit?.uid?.let {
+                navController.navigate(
+                    ShowFruitRoute(it))
+            }
         }
     }
 
@@ -103,6 +134,10 @@ fun Navigator(
         }
     }
 
+    val navigateToQRCodeScanner = fun(){
+        navController.navigate(QRCodeScannerRoute)
+    }
+
     // wrongchangeMessage
     //suspend fun getTrees(): List<Tree> {
     //    return dao.getTrees()
@@ -110,6 +145,8 @@ fun Navigator(
     val getTrees : suspend () -> List<Tree> = {
         dao.getTrees()
     }
+
+
 
 
     val getTreeByUid: suspend (Int) -> Tree? =
@@ -178,11 +215,21 @@ fun Navigator(
                 navigationIcon = {
                     val currentRouteIsHome =
                         navController.currentBackStackEntryAsState().value?.destination?.hasRoute<HomeRoute>()
+                    //val currentRouteIsQRCodeScan =
+                    //    navController.currentBackStackEntryAsState().value?.destination?.hasRoute<QRCodeScannerRoute>()
+                    //val currentDestination =
+                    //    navController.currentBackStackEntryAsState().value?.destination?.toString().orEmpty()
                     if (currentRouteIsHome == false) {
                         Button(
                             modifier = Modifier.semantics { contentDescription = "navigateBack" },
                             onClick = {
-                                navController.navigateUp()
+                                //if (currentRouteIsQRCodeScan == true){
+                                //    navigateToHome()
+                                //} else {
+                                //    val currentDestination =
+                                 //   Log.d("CAMPICO", currentDestination )
+                                    navController.navigateUp()
+                                //}
                             }) {
                             Text("Back")
                         }
@@ -220,7 +267,8 @@ fun Navigator(
                     navigateToSearchTrees = navigateToSearchTrees,
                     navigateToAddTree = navigateToAddTree,
                     navigateToLogin = navigateToLogin,
-                    networkService = networkService
+                    networkService = networkService,
+                    navigateToQRCodeScanner = navigateToQRCodeScanner
                 )
             }
             // TOKEN
@@ -326,6 +374,13 @@ fun Navigator(
                     getFruitByUid = getFruitByUid,
                     updateFruit = updateFruit,
                     changeMessage = changeMessage
+                )
+            }
+            // SCANNER
+            composable<QRCodeScannerRoute>{
+                QRCodeScannerScreen(
+                    navigateToTreeDisplayById = navigateToTreeDisplayById,
+                    navigateToFruitDisplayById = navigateToFruitDisplayById
                 )
             }
         }

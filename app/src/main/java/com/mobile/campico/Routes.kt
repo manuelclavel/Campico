@@ -12,6 +12,7 @@ object LoginRoute
 @Serializable
 data class TokenRoute(val email: String)
 @Serializable
+
 object AddTreeRoute
 
 
@@ -35,3 +36,6 @@ data class ShowFruitRoute(val uid: Int)
 
 @Serializable
 data class EditFruitRoute(val uid: Int)
+
+@Serializable
+object QRCodeScannerRoute

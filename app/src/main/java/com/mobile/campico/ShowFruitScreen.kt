@@ -57,13 +57,13 @@ fun ShowFruitScreen(
                 modifier = Modifier.semantics { contentDescription = "idField" },
                 label = { Text("id") }
             )
-            TextField(
-                readOnly = true,
-                value = fruit?.uidTree.toString(),
-                onValueChange = { },
-                modifier = Modifier.semantics { contentDescription = "treeField" },
-                label = { Text("fruit") }
-            )
+            //TextField(
+            //    readOnly = true,
+            //    value = fruit?.uidTree.toString(),
+            //    onValueChange = { },
+            //    modifier = Modifier.semantics { contentDescription = "treeField" },
+            //    label = { Text("tree") }
+            //)
 
             Button(
                 modifier = Modifier.semantics { contentDescription = "Edit" },
