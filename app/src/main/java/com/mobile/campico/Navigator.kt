@@ -31,6 +31,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +65,22 @@ fun Navigator(
     val navigateToToken = fun(email:String) {
         navController.navigate(TokenRoute(email))
     }
+    // begin
+    val navigateToSearchVisits : () -> Unit = {
+        navController.navigate(SearchVisitsRoute)
+    }
+    val navigateToAddVisit : () -> Unit = {
+        navController.navigate(AddVisitRoute)
+    }
+    val navigateToEditVisit = fun(visit: Visit?) {
+        visit?.uid?.let {
+            navController.navigate(
+                EditVisitRoute(it))
+        }
+    }
+
+    // end
+
     val navigateToSearchTrees : () -> Unit = {
         navController.navigate(SearchTreesRoute)
     }
@@ -77,10 +94,19 @@ fun Navigator(
         }
     }
 
-    val getTreeById: suspend (String) -> Tree? =
-        { id ->
-            dao.findTreeById(id = id)
+    val navigateToVisitDisplay = fun(visit: Visit?) {
+        visit?.uid?.let {
+            navController.navigate(
+                ShowVisitRoute(it))
         }
+    }
+
+
+    //val getTreeById: suspend (String) -> Tree? =
+    //    { id ->
+    //        dao.findTreeById(id = id)
+    //    }
+
     val navigateToTreeDisplayById = fun(id:String) {
         scope.launch {
             val tree = dao.findTreeById(id)
@@ -142,18 +168,40 @@ fun Navigator(
     //suspend fun getTrees(): List<Tree> {
     //    return dao.getTrees()
     //}
+    // begin
+    val getVisits : suspend () -> List<Visit> = {
+        dao.getVisits()
+    }
+
+    val getVisitByUid: suspend (Int) -> Visit? =
+        { uid ->
+            dao.findVisitByUid(uid = uid)
+        }
+
+    val insertVisit: suspend (Visit) -> Unit = { visit ->
+        dao.insertVisits(visit)
+    }
+
+    val deleteVisit: suspend (Date) -> Unit = { date ->
+        dao.deleteVisit(date = date)
+    }
+
+    val updateVisit: suspend (Date, Date) -> Unit =
+        { dateOld, dateNew->
+            dao.updateVisit(
+                dateOld = dateOld,
+                dateNew = dateNew)
+        }
+
+    // end
     val getTrees : suspend () -> List<Tree> = {
         dao.getTrees()
     }
-
-
-
 
     val getTreeByUid: suspend (Int) -> Tree? =
         { uid ->
             dao.findTreeByUid(uid = uid)
         }
-
 
     val insertTree: suspend (Tree) -> Unit = { tree ->
         dao.insertAll(tree)
@@ -268,7 +316,9 @@ fun Navigator(
                     navigateToAddTree = navigateToAddTree,
                     navigateToLogin = navigateToLogin,
                     networkService = networkService,
-                    navigateToQRCodeScanner = navigateToQRCodeScanner
+                    navigateToQRCodeScanner = navigateToQRCodeScanner,
+                    navigateToSearchVisits = navigateToSearchVisits,
+                    navigateToAddVisit = navigateToAddVisit
                 )
             }
             // TOKEN
@@ -289,6 +339,45 @@ fun Navigator(
                     navigateToToken = navigateToToken,
                 )
             }
+            // SEARCH VISITS
+            composable<SearchVisitsRoute> {
+                SearchVisitsScreen(
+                    changeMessage = changeMessage,
+                    getVisits = getVisits,
+                    navigateToVisitDisplay = navigateToVisitDisplay
+                )
+            }
+            // ADD VISIT
+            composable<AddVisitRoute> {
+                AddVisitScreen(
+                    changeMessage = changeMessage,
+                    insertVisit = insertVisit
+                )
+            }
+            // SHOW VISIT
+           // composable<ShowVisitRoute>{
+           //         backStackEntry ->
+           //     val visit : ShowVisitRoute = backStackEntry.toRoute()
+           //     ShowVisitScreen(
+           //         uid = visit.uid,
+           //         getVisitByUid = getVisitByUid,
+           //         deleteVisit = deleteVisit,
+           //         changeMessage = changeMessage,
+           //         navigateToEditVist = navigateToEditVisit,
+           //         navigateBack = navigateBack
+           //     )
+           // }
+            // EDIT VISIT
+          //  composable<EditVisitRoute>{
+          //          backStackEntry ->
+          //      val visit : EditVisitRoute = backStackEntry.toRoute()
+          //      EditVisitScreen(
+          //          uid = visit.uid,
+          //          getVisitByUid = getVisitByUid,
+          //          updateVisit = updateVisit,
+          //          changeMessage = changeMessage
+           //     )
+           // }
             // SEARCH TREES
             composable<SearchTreesRoute> {
                 SearchTreesScreen(

@@ -106,5 +106,8 @@ dependencies {
 // Accompanist Permissions for handling runtime permissions
     implementation(libs.accompanistPermissions)
     // layout
-    implementation(libs.androidx.constraintlayout)
+    //implementation(libs.androidx.constraintlayout)
+    // icons
+    implementation(libs.androidx.compose.material.icons.core) // Check for the latest version
+
 }

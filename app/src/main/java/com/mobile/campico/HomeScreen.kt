@@ -27,6 +27,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     changeMessage: (String) -> Unit,
+    navigateToSearchVisits: () -> Unit,
+    navigateToAddVisit: () -> Unit,
     navigateToSearchTrees: () -> Unit,
     navigateToAddTree: () -> Unit,
     navigateToLogin: () -> Unit,
@@ -70,9 +72,36 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // begin
         Spacer(
             modifier = Modifier.size(16.dp)
         )
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "navigateToSearchVisits" },
+            onClick = {
+                navigateToSearchVisits()
+            })
+        {
+            Text(
+                "Search Visits",
+                modifier = Modifier
+                    .semantics { contentDescription = "SearchVisits" },
+            )
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "navigateToAddVisit" },
+            onClick = {
+                navigateToAddVisit()
+            }) {
+            Text("Add Visit", modifier = Modifier.semantics { contentDescription = "AddVisit" })
+        }
+
+        // end
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -87,15 +116,7 @@ fun HomeScreen(
                     .semantics { contentDescription = "SearchTrees" },
             )
         }
-        Button(
-            modifier = Modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "navigateToQRCodeScanner" },
-            onClick = {
-                navigateToQRCodeScanner()
-            }) {
-            Text("Scan QRCode", modifier = Modifier.semantics { contentDescription = "ScanQRCode" })
-        }
+
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -104,6 +125,16 @@ fun HomeScreen(
                 navigateToAddTree()
             }) {
             Text("Add Tree", modifier = Modifier.semantics { contentDescription = "AddTree" })
+        }
+
+        Button(
+            modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "navigateToQRCodeScanner" },
+            onClick = {
+                navigateToQRCodeScanner()
+            }) {
+            Text("Scan QRCode", modifier = Modifier.semantics { contentDescription = "ScanQRCode" })
         }
 
 

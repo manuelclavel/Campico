@@ -11,6 +11,22 @@ object LoginRoute
 
 @Serializable
 data class TokenRoute(val email: String)
+
+@Serializable
+
+object AddVisitRoute
+
+
+@Serializable
+object SearchVisitsRoute
+
+@Serializable
+data class ShowVisitRoute(val uid: Int,)
+
+@Serializable
+data class EditVisitRoute(val uid: Int)
+
+
 @Serializable
 
 object AddTreeRoute
