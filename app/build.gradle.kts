@@ -109,5 +109,8 @@ dependencies {
     //implementation(libs.androidx.constraintlayout)
     // icons
     implementation(libs.androidx.compose.material.icons.core) // Check for the latest version
-
+// coil library
+    // Optional: for displaying images with Coil
+    // (using Coil library): This is used to efficiently load and display the image from the selected Uri in your Compose UI.
+    implementation(libs.coil.compose) // Use the latest version
 }

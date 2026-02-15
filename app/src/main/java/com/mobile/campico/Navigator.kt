@@ -164,6 +164,10 @@ fun Navigator(
         navController.navigate(QRCodeScannerRoute)
     }
 
+    val navigateToUploadPhoto = fun(){
+        navController.navigate(UploadPhotoRoute)
+    }
+
     // wrongchangeMessage
     //suspend fun getTrees(): List<Tree> {
     //    return dao.getTrees()
@@ -318,7 +322,8 @@ fun Navigator(
                     networkService = networkService,
                     navigateToQRCodeScanner = navigateToQRCodeScanner,
                     navigateToSearchVisits = navigateToSearchVisits,
-                    navigateToAddVisit = navigateToAddVisit
+                    navigateToAddVisit = navigateToAddVisit,
+                    navigateToUploadPhoto = navigateToUploadPhoto
                 )
             }
             // TOKEN
@@ -352,6 +357,11 @@ fun Navigator(
                 AddVisitScreen(
                     changeMessage = changeMessage,
                     insertVisit = insertVisit
+                )
+            }
+            // ADD TREE
+            composable<UploadPhotoRoute> {
+                UploadPhotoScreen(
                 )
             }
             // SHOW VISIT

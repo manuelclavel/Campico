@@ -33,7 +33,8 @@ fun HomeScreen(
     navigateToAddTree: () -> Unit,
     navigateToLogin: () -> Unit,
     networkService: NetworkService,
-    navigateToQRCodeScanner: () -> Unit
+    navigateToQRCodeScanner: () -> Unit,
+    navigateToUploadPhoto: () -> Unit
 ) {
 
     val context = LocalContext.current
@@ -99,6 +100,19 @@ fun HomeScreen(
                 navigateToAddVisit()
             }) {
             Text("Add Visit", modifier = Modifier.semantics { contentDescription = "AddVisit" })
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "UploadPhoto" },
+            onClick = {
+               navigateToUploadPhoto()
+            }) {
+            Text(
+                "Upload Photo",
+                modifier = Modifier.semantics { contentDescription = "UploadPhotoButton" }
+            )
         }
 
         // end
