@@ -113,4 +113,17 @@ dependencies {
     // Optional: for displaying images with Coil
     // (using Coil library): This is used to efficiently load and display the image from the selected Uri in your Compose UI.
     implementation(libs.coil.compose) // Use the latest version
+    // aws sdk
+    //implementation(platform(awssdk.bom))
+    //implementation(platform(libs.log4j.bom))
+
+    //implementation(awssdk.services.s3)
+   // implementation(awssdk.services.dynamodb)
+   // implementation(awssdk.services.iam)
+   // implementation(awssdk.services.cloudwatch)
+   // implementation(awssdk.services.cognitoidentityprovider)
+   // implementation(awssdk.services.sns)
+   // implementation(awssdk.services.pinpoint)
+   // implementation("org.apache.logging.log4j:log4j-slf4j2-impl")
+
 }

@@ -12,6 +12,8 @@ data class UserToken (val token: String)
 @Serializable
 data class UploadBackupRequest (val key: String, val content: String, val token: String, val email:String)
 
+@Serializable
+data class UploadObjectRequest (val key: String, val content: String, val token: String, val email:String)
 
 
 @Serializable

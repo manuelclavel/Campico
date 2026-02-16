@@ -362,6 +362,8 @@ fun Navigator(
             // ADD TREE
             composable<UploadPhotoRoute> {
                 UploadPhotoScreen(
+                    networkService = networkService,
+                    changeMessage = changeMessage
                 )
             }
             // SHOW VISIT
