@@ -368,18 +368,16 @@ fun Navigator(
                 )
             }
             // SHOW VISIT
-           // composable<ShowVisitRoute>{
-           //         backStackEntry ->
-           //     val visit : ShowVisitRoute = backStackEntry.toRoute()
-           //     ShowVisitScreen(
-           //         uid = visit.uid,
-           //         getVisitByUid = getVisitByUid,
-           //         deleteVisit = deleteVisit,
-           //         changeMessage = changeMessage,
-           //         navigateToEditVist = navigateToEditVisit,
-           //         navigateBack = navigateBack
-           //     )
-           // }
+           composable<ShowVisitRoute>{
+                    backStackEntry ->
+                val visit : ShowVisitRoute = backStackEntry.toRoute()
+                ShowVisitScreen(
+                    uid = visit.uid,
+                    networkService = networkService,
+                    changeMessage = changeMessage,
+                    navigateBack = navigateBack,
+                )
+           }
             // EDIT VISIT
           //  composable<EditVisitRoute>{
           //          backStackEntry ->

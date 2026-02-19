@@ -45,5 +45,11 @@ interface NetworkService {
         @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: AddVisitRequest
     ): SimpleResponse
+
+    @PUT
+    suspend fun getVisitByUid(
+        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: GetVisitByUidRequest
+    ): SimpleResponse
 }
 
