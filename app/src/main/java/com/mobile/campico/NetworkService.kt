@@ -27,5 +27,23 @@ interface NetworkService {
         @Body upload: UploadObjectRequest
     ): SimpleResponse
 
+
+    @PUT
+    suspend fun getTrees(
+        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: GetTreesRequest
+    ): SimpleResponse
+
+    @PUT
+    suspend fun getVisits(
+        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: GetVisitsRequest
+    ): SimpleResponse
+
+    @PUT
+    suspend fun addVisit(
+        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: AddVisitRequest
+    ): SimpleResponse
 }
 

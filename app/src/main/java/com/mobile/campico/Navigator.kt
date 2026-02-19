@@ -348,7 +348,7 @@ fun Navigator(
             composable<SearchVisitsRoute> {
                 SearchVisitsScreen(
                     changeMessage = changeMessage,
-                    getVisits = getVisits,
+                    networkService = networkService,
                     navigateToVisitDisplay = navigateToVisitDisplay
                 )
             }
@@ -356,6 +356,7 @@ fun Navigator(
             composable<AddVisitRoute> {
                 AddVisitScreen(
                     changeMessage = changeMessage,
+                    networkService = networkService,
                     insertVisit = insertVisit
                 )
             }
@@ -394,7 +395,7 @@ fun Navigator(
             composable<SearchTreesRoute> {
                 SearchTreesScreen(
                     changeMessage = changeMessage,
-                    getTrees = getTrees,
+                    networkService = networkService,
                     navigateToTreeDisplay = navigateToTreeDisplay,
                     getTotalFruitsByTreeUid = getTotalFruitsByTreeUid
                 )

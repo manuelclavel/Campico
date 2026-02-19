@@ -21,22 +21,28 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.Preferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
-import kotlin.time.Instant
 
 fun convertDateToStringDate(date: Date?): String{
     // 1. Convert the java.util.Date to an Instant (a point on the time-line in UTC)
@@ -72,18 +78,32 @@ fun convertDateStringToDate(dateString: String): Date {
 @Composable
 fun AddVisitScreen(
     changeMessage: (String) -> Unit,
-    insertVisit: suspend (Visit) -> Unit
+    insertVisit: suspend (Visit) -> Unit,
+    networkService: NetworkService
 ) {
 
     val scope = rememberCoroutineScope()
-    //val context = LocalContext.current
+    val context = LocalContext.current
+    val appContext = context.applicationContext
+
+    var code by remember { mutableIntStateOf(0) }
+    var message by remember { mutableStateOf("") }
+
+
+    var token:String by remember {mutableStateOf("")}
+    var email:String by remember {mutableStateOf("")}
+
 
     var selectedDateText by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
     LaunchedEffect(Unit) {
-        changeMessage("Please, add a flash card.")
+        val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
+        val preferences = preferencesFlow.first()
+        token = preferences[TOKEN] ?: ""
+        email = preferences[EMAIL] ?: ""
+        changeMessage("Please, add a visit.")
     }
 
     Column() {
@@ -105,22 +125,49 @@ fun AddVisitScreen(
         Button(
             modifier = Modifier.semantics { contentDescription = "Add" },
             onClick = {
+
                 scope.launch {
-                    try {
-                        insertVisit(
-                            Visit(
-                                uid = 0,
-                                date = convertDateStringToDate(selectedDateText)
+                    //The withContext function is your primary tool for seamlessly moving between Dispatchers.IO,
+                    //Dispatchers.Default,
+                    //and Dispatchers.Main within a single coroutine, ensuring background tasks don't freeze the UI.
+
+                    //Start on Main (Implicitly): Composable functions generally run on the Main thread.
+                    //Switch to IO: Use withContext(Dispatchers.IO) { ... } to perform heavy lifting (database, network)
+                    // without blocking the UI.
+                    //Switch back to Main: After the withContext(Dispatchers.IO) block finishes,
+                    // the coroutine automatically resumes on the original Main dispatcher
+                    // where you can update your UI state and trigger recomposition.
+
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val result = networkService.addVisit(
+                                payload = AddVisitRequest(
+                                    token = token,
+                                    email = email,
+                                    date = selectedDateText
+                                )
                             )
-                        )
-                        selectedDateText = ""
-                        //changeMessage(context.getString(R.string.add_successful))
-                    } catch (e: SQLiteConstraintException) {
-                        //changeMessage(context.getString(R.string.add_unsuccessful))
-                    } catch (e: Exception) {
-                        Log.d("CAMPICO", e.message.toString())
-                        changeMessage(e.toString())
+                            code = result.code
+                            message = result.message
+                            changeMessage(message)
+                            Log.d("CAMPICO", message)
+
+                            //Prefer ApplicationContext: When you need a Context for operations that do not interact with the UI
+                            //(e.g., file operations, database access, accessing resources like strings or drawables),
+                            // use the application context.
+                            //The application context lives for the lifetime of your app and is safe to use on any thread.
+                        } catch (e: Exception) {
+                            message = "There was an error in the request."
+                            Log.d("CAMPICO", "Unexpected exception: $e")
+                        }
                     }
+                    if (code == 200) {
+                        // edit the preferences and save email
+                        changeMessage(message)
+                    } else {
+                        changeMessage(message)
+                    }
+
                 }
             })
         {

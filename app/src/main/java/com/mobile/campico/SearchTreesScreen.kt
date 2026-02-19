@@ -1,5 +1,6 @@
 package com.mobile.campico
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,15 +21,36 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.Preferences
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+
+fun jsonArrayStringToTreeList(jsonString: String): List<Tree> {
+    val gson = Gson()
+    // A common approach is to parse it as an Array and convert to a List
+    val treesArray = gson.fromJson(jsonString, Array<Tree>::class.java)
+    return treesArray.toList()
+
+    // Another method using TypeToken for more complex types, useful in generic functions
+    // val listType = object : TypeToken<List<Person>>() {}.type
+    // return gson.fromJson(jsonString, listType)
+}
 @Composable
 fun NumberFruitsByTreeUidCell(uidTree: Int,
                            getTotalFruitsByTreeUid: suspend (Int) -> Int) {
@@ -111,16 +133,69 @@ fun TreeList(
 @Composable
 fun SearchTreesScreen(
     changeMessage: (String) -> Unit,
-    getTrees: suspend () -> List<Tree>,
     getTotalFruitsByTreeUid: suspend (Int) -> Int,
-    navigateToTreeDisplay: (Tree) -> Unit
+    navigateToTreeDisplay: (Tree) -> Unit,
+    networkService: NetworkService
 ) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val appContext = context.applicationContext
+
+    var code by remember { mutableIntStateOf(0) }
+    var message by remember { mutableStateOf("") }
 
     var trees by remember { mutableStateOf(emptyList<Tree>()) }
 
+    var token:String by remember {mutableStateOf("")}
+    var email:String by remember {mutableStateOf("")}
+
+
     LaunchedEffect(Unit) {
-        //changeMessage("Please, select a flash card.")
-        trees = getTrees()
+        val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
+        val preferences = preferencesFlow.first()
+        token = preferences[TOKEN] ?: ""
+        email = preferences[EMAIL] ?: ""
+        scope.launch {
+            //The withContext function is your primary tool for seamlessly moving between Dispatchers.IO,
+            //Dispatchers.Default,
+            //and Dispatchers.Main within a single coroutine, ensuring background tasks don't freeze the UI.
+
+            //Start on Main (Implicitly): Composable functions generally run on the Main thread.
+            //Switch to IO: Use withContext(Dispatchers.IO) { ... } to perform heavy lifting (database, network)
+            // without blocking the UI.
+            //Switch back to Main: After the withContext(Dispatchers.IO) block finishes,
+            // the coroutine automatically resumes on the original Main dispatcher
+            // where you can update your UI state and trigger recomposition.
+
+            withContext(Dispatchers.IO) {
+                try {
+                    val result = networkService.getTrees(
+                       payload = GetTreesRequest(
+                            token = token,
+                            email = email
+                        )
+                    )
+                    code = result.code
+                    message = result.message
+
+
+                    //Prefer ApplicationContext: When you need a Context for operations that do not interact with the UI
+                    //(e.g., file operations, database access, accessing resources like strings or drawables),
+                    // use the application context.
+                    //The application context lives for the lifetime of your app and is safe to use on any thread.
+                } catch (e: Exception) {
+                    message = "There was an error in the request."
+                    Log.d("CAMPICO", "Unexpected exception: $e")
+                }
+            }
+            if (code == 200) {
+                // edit the preferences and save email
+                trees = jsonArrayStringToTreeList(message)
+            } else {
+                changeMessage(message)
+            }
+
+        }
     }
 
 
