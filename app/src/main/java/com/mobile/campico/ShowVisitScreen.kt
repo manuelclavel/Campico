@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -124,25 +125,46 @@ fun ShowVisitScreen(
            // {
            //     Text("Edit")
            // }
-           // Button(
-           //     modifier = Modifier.semantics { contentDescription = "Delete" },
-           //     onClick = {
-           //         scope.launch {
-           //             try {
-           //                 deleteTree(
-           //                     tree?.id.orEmpty())
-           //                 navigateBack()
-           //                 //changeMessage("The flash card has been deleted from  your database")
-           //             } catch (e: SQLiteConstraintException) {
-           //                 //changeMessage("Unexpected exception: $e")
-           //             } catch (e: Exception) {
-           //                 //changeMessage("Unexpected exception: $e")
-           //             }
-           //         }
-           //     })
-           // {
-           //     Text("Delete")
-           // }
+            Button(
+                modifier = Modifier.semantics { contentDescription = "Delete" },
+                onClick = {
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            try {
+                                val result = networkService.deleteVisit(
+                                    payload = DeleteVisitRequest(
+                                        token = token,
+                                        email = email,
+                                        uid = uid
+                                    )
+                                )
+                                code = result.code
+                                message = result.message
+                                changeMessage(message)
+                                Log.d("CAMPICO", message)
+
+                                //Prefer ApplicationContext: When you need a Context for operations that do not interact with the UI
+                                //(e.g., file operations, database access, accessing resources like strings or drawables),
+                                // use the application context.
+                                //The application context lives for the lifetime of your app and is safe to use on any thread.
+                            } catch (e: Exception) {
+                                message = "There was an error in the request."
+                                Log.d("CAMPICO", "Unexpected exception: $e")
+                            }
+                        }
+                        if (code == 200) {
+                            // edit the preferences and save email
+                            changeMessage(message)
+                            navigateBack()
+                        } else {
+                            changeMessage(message)
+                        }
+
+                    }
+                })
+            {
+                Text("Delete")
+           }
 
         }
     }

@@ -25,6 +25,8 @@ data class GetVisitsRequest (val token: String, val email:String, val query: Str
 data class AddVisitRequest (val token: String, val email:String, val query: String = "addVisit", val date:String)
 
 @Serializable
+data class DeleteVisitRequest (val token: String, val email: String, val query: String = "deleteVisitByUid", val uid: Int)
+@Serializable
 data class GetVisitByUidRequest(val token: String, val email:String, val query: String = "getVisitByUid", val uid:Int)
 
 @Serializable
