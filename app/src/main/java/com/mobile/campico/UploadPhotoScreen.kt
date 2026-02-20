@@ -106,16 +106,16 @@ fun UploadPhotoScreen(networkService: NetworkService, changeMessage: (String) ->
                         context.contentResolver.openInputStream(uri)?.use {
                                 inputStream ->
                             byteArray = inputStream.readBytes()
-                            val encodedString = Base64.encode(byteArray)
-                            val response = networkService.uploadObject(
-                                upload = UploadObjectRequest(
-                                    key = "test",
-                                    content = encodedString,
-                                    token = token,
-                                    email = email
-                                )
-                            )
-                            changeMessage(response.toString())
+                            //val encodedString = Base64.encode(byteArray)
+                            //val response = networkService.uploadMediaVisitObject(
+                            //    upload = UploadMediaVisitRequest(
+                            //        key = "test",
+                            //        content = encodedString,
+                            //        token = token,
+                            //        email = email
+                            //    )
+                            //)
+                            //changeMessage(response.toString())
                         }
                     }
 

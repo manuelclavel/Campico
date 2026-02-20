@@ -13,7 +13,7 @@ data class UserToken (val token: String)
 data class UploadBackupRequest (val key: String, val content: String, val token: String, val email:String)
 
 @Serializable
-data class UploadObjectRequest (val key: String, val content: String, val token: String, val email:String)
+data class UploadMediaVisitRequest (val s3key: String, val visitUid: Int, val content: String, val token: String, val email:String)
 
 @Serializable
 data class GetTreesRequest (val token: String, val email: String, val query: String = "getTrees")

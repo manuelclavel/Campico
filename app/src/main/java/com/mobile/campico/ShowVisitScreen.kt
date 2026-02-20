@@ -1,9 +1,16 @@
 package com.mobile.campico
 
+import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -23,6 +30,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
+import coil.compose.rememberAsyncImagePainter
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +38,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
+import kotlin.io.encoding.Base64
 
 
 fun jsonArrayStringToVisit(jsonString: String): Visit {
@@ -54,10 +63,19 @@ fun ShowVisitScreen(
     var code by remember { mutableIntStateOf(0) }
     var message by remember { mutableStateOf("") }
 
-    var token:String by remember {mutableStateOf("")}
-    var email:String by remember {mutableStateOf("")}
+    var token: String by remember { mutableStateOf("") }
+    var email: String by remember { mutableStateOf("") }
 
     var visit: Visit? by remember { mutableStateOf(Visit(uid = 0, Date())) }
+
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri: Uri? ->
+            imageUri = uri
+        }
+    )
+
 
     LaunchedEffect(Unit) {
         val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
@@ -105,7 +123,8 @@ fun ShowVisitScreen(
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),) {
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             Spacer(
                 modifier = Modifier.size(16.dp)
             )
@@ -120,11 +139,11 @@ fun ShowVisitScreen(
             //Button(
             //    modifier = Modifier.semantics { contentDescription = "Edit" },
             //    onClick = {
-                    //navigateToEditTree(tree)
+            //navigateToEditTree(tree)
             //    })
-           // {
-           //     Text("Edit")
-           // }
+            // {
+            //     Text("Edit")
+            // }
             Button(
                 modifier = Modifier.semantics { contentDescription = "Delete" },
                 onClick = {
@@ -164,8 +183,87 @@ fun ShowVisitScreen(
                 })
             {
                 Text("Delete")
-           }
+            }
+            // Button to launch the photo picker
+            Button(onClick = {
+                // Launch the picker for a single image
+                launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }) {
+                Text(text = "Pick Image from Gallery")
+            }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Display the selected image
+            imageUri?.let { uri ->
+                Image(
+                    painter = rememberAsyncImagePainter(model = uri),
+                    contentDescription = "Selected Image",
+                    modifier = Modifier
+                        .size(200.dp)
+                        .padding(16.dp)
+                )
+            }
+            // Upload the selected image
+            //changeMessage("Backing up flashcard database in S3...")
+
+            Button(onClick= {
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        //val byteArrayOutputStream = ByteArrayOutputStream()
+                        changeMessage("Uploading object in S3...")
+                        imageUri?.let { uri ->
+                            val byteArray: ByteArray
+                            // Use the 'use' extension function to ensure
+                            // the InputStream is automatically closed
+                            context.contentResolver.openInputStream(uri)?.use {
+                                    inputStream ->
+                                byteArray = inputStream.readBytes()
+                                val encodedString = Base64.encode(byteArray)
+                                val response = visit?.uid?.let {
+                                    // generating a unique key
+                                    val timestampMillis: Long = System.currentTimeMillis()
+                                    val key = "timestamp:$timestampMillis"
+
+                                    // generating a base64 key
+                                    val byteArray = key.toByteArray(Charsets.UTF_8)
+                                    val s3key: String = Base64.Default.encode(byteArray)
+
+                                    // uploading
+                                    networkService.uploadMediaVisitObject(
+                                        upload = UploadMediaVisitRequest(
+                                            visitUid = it,
+                                            s3key = s3key,
+                                            content = encodedString,
+                                            token = token,
+                                            email = email
+                                        )
+                                    )
+                                }
+                                changeMessage(response.toString())
+                            }
+                        }
+
+
+                        //val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm")
+                        //val current = LocalDateTime.now().format(formatter)
+                        //val key = "campico_$current.db"
+
+
+                        //changeMessage(response.message)
+                        // Log.d("FLASHCARD", response.message)
+
+
+                        //} catch (e: Exception) {
+                        //    changeMessage("Unexpected exception: Database cannot back up in S3")
+                        //    Log.d("FLASHCARD", "EXCEPTION: $e")
+
+                    }
+                }
+            }
+            ){Text("Upload")}
         }
+
+
     }
 }

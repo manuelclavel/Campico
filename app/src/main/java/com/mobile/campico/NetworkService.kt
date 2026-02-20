@@ -21,10 +21,10 @@ interface NetworkService {
     ): SimpleResponse
 
     @PUT
-    suspend fun uploadObject(
+    suspend fun uploadMediaVisitObject(
         // CampicoLambdaUploadObjectOrchestrator
         @Url url: String = "https://5skipjg6twldyyrlbfoy6n26jy0htjlh.lambda-url.ap-southeast-1.on.aws/",
-        @Body upload: UploadObjectRequest
+        @Body upload: UploadMediaVisitRequest
     ): SimpleResponse
 
 
