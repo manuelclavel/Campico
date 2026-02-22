@@ -113,6 +113,9 @@ dependencies {
     // Optional: for displaying images with Coil
     // (using Coil library): This is used to efficiently load and display the image from the selected Uri in your Compose UI.
     implementation(libs.coil.compose) // Use the latest version
+    implementation(libs.coil3.coil.network.okhttp)
+
+
     // aws sdk
     //implementation(platform(awssdk.bom))
     //implementation(platform(libs.log4j.bom))

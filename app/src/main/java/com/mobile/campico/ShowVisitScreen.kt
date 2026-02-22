@@ -1,17 +1,28 @@
 package com.mobile.campico
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -25,11 +36,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +53,122 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
 import kotlin.io.encoding.Base64
+//import android.util.Base64
 
+
+
+
+fun jsonArrayStringToMediaVisitList(jsonString: String): List<MediaVisit> {
+    val gson = Gson()
+    val mediaVisitsArray = gson.fromJson(jsonString, Array<MediaVisit>::class.java)
+    return mediaVisitsArray.toList()
+}
+@Composable
+fun MediaVisitList(
+    mediaVisits: List<MediaVisit>,
+    networkService: NetworkService,
+    displayBitmap: (Bitmap) -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val appContext = context.applicationContext
+    var code by remember { mutableIntStateOf(0) }
+    var message by remember { mutableStateOf("") }
+
+    var token: String by remember { mutableStateOf("") }
+    var email: String by remember { mutableStateOf("") }
+
+
+    LaunchedEffect(Unit) {
+        val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
+        val preferences = preferencesFlow.first()
+        token = preferences[TOKEN] ?: ""
+        email = preferences[EMAIL] ?: ""
+    }
+
+    LazyColumn(
+        modifier = Modifier.padding(16.dp)
+    ) {
+        stickyHeader {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.LightGray)
+                    .padding(6.dp)
+                    .height(IntrinsicSize.Min) // Key modifier for vertical divider height
+
+            ) {
+                Row(modifier =
+                    Modifier.padding(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                {
+                    Text(text= "Key", modifier = Modifier.width(150.dp), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        items(
+            items = mediaVisits,
+            key = { mediaVisit -> mediaVisit.uid }
+        ) { mediaVisit ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(width = 1.dp, color = Color.LightGray)
+                    .padding(6.dp)
+                    .height(IntrinsicSize.Min) // Key modifier for vertical divider height
+                    .clickable(onClick = {
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                try {
+                                    val result = networkService.getMediaObjectByKey(
+                                        payload = GetMediaObjectByKeyRequest(
+                                            token = token,
+                                            email = email,
+                                            key = mediaVisit.s3key,
+                                        )
+                                    )
+                                    code = result.code
+                                    message = result.message
+
+                                    if (code == 200) {
+                                        val response = networkService.getBase64Image(message)
+                                        val base64String = response.string() // Or response.string().replace("data:image/png;base64,", "") if data URI
+                                        val decodedBytes = java.util.Base64.getDecoder().decode(base64String) // [Link: Base64.Decoder https://docs.oracle.com/javase/8/docs/api/java/util/Base64.Decoder.html] [1]
+                                        val decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+                                        displayBitmap(decodedBitmap)
+
+                                        Log.d("CAMPICO", message)
+                                    } else {
+                                        Log.d("CAMPICO", message)
+
+                                    }
+
+                                    //Prefer ApplicationContext: When you need a Context for operations that do not interact with the UI
+                                    //(e.g., file operations, database access, accessing resources like strings or drawables),
+                                    // use the application context.
+                                    //The application context lives for the lifetime of your app and is safe to use on any thread.
+                                } catch (e: Exception) {
+                                    message = "There was an error in the request."
+                                    Log.d("CAMPICO", "Unexpected exception: $e")
+                                }
+                            }
+
+                        }
+                        }
+                    )
+            ) {
+                Row(modifier =
+                    Modifier.padding(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                {
+                    Text(text= mediaVisit.s3key,
+                        modifier = Modifier.width(150.dp))
+                }
+            }
+        }
+    }
+}
 
 fun jsonArrayStringToVisit(jsonString: String): Visit {
     val gson = Gson()
@@ -68,6 +197,8 @@ fun ShowVisitScreen(
 
     var visit: Visit? by remember { mutableStateOf(Visit(uid = 0, Date())) }
 
+    var bitmapState by remember { mutableStateOf<Bitmap?>(null) }
+
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -76,7 +207,11 @@ fun ShowVisitScreen(
         }
     )
 
+    var mediaVisits by remember { mutableStateOf(emptyList<MediaVisit>()) }
 
+    val displayBitMap = fun(bitmap: Bitmap){
+        bitmapState = bitmap
+    }
     LaunchedEffect(Unit) {
         val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
         val preferences = preferencesFlow.first()
@@ -113,9 +248,34 @@ fun ShowVisitScreen(
             }
 
         }
+        // get list of media-visits
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val result = networkService.getMediaVisitsByVisitUid(
+                        payload = GetMediaVisitsByVisitUidRequest(
+                            token = token,
+                            email = email,
+                            visitUid = uid
+                        )
+                    )
+                    code = result.code
+                    message = result.message
+                    Log.d("CAMPICO", message)
 
-        //tree = getTreeByUid(uid);
-        //changeMessage("Please, select an option.")
+                } catch (e: Exception) {
+                    message = "There was an error in the request."
+                    Log.d("CAMPICO", "Unexpected exception: $e")
+                }
+            }
+            if (code == 200) {
+                // edit the preferences and save email
+                mediaVisits = jsonArrayStringToMediaVisitList(message)
+            } else {
+                changeMessage(message)
+            }
+
+        }
     }
     if (visit == null) {
         changeMessage("Visit not found")
@@ -144,6 +304,22 @@ fun ShowVisitScreen(
             // {
             //     Text("Edit")
             // }
+            Spacer(
+                modifier = Modifier.size(16.dp)
+            )
+            MediaVisitList(
+                mediaVisits = mediaVisits,
+                networkService = networkService,
+                displayBitmap = displayBitMap
+            )
+
+           if (bitmapState != null){
+                AsyncImage(
+                    model = bitmapState, // Pass the Bitmap directly
+                    contentDescription = "Decoded Image"
+                )
+            }
+
             Button(
                 modifier = Modifier.semantics { contentDescription = "Delete" },
                 onClick = {

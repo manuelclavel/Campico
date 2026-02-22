@@ -83,6 +83,10 @@ data class Fruit(
     @ColumnInfo(name = "uidTree") val uidTree: Int
 )
 
+data class MediaVisit(
+   val uid: Int,  val visitUid: Int, val s3key: String
+)
+
 @Dao
 interface CampicoDao {
     @RawQuery

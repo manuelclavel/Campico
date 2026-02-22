@@ -3,7 +3,8 @@
 agp = "9.0.1"
 barcodeScanning = "17.3.0"
 coilCompose = "2.7.0"
-composeVersion = "1.10.2"
+coilNetworkOkhttp = "3.3.0"
+composeVersion = "1.10.3"
 constraintlayout = "2.2.1"
 datastorePreferences = "1.2.0"
 kotlin = "2.3.10"
@@ -52,6 +53,8 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "roomVersion" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-network-okhttp = { module = "io.coil-kt:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
+coil3-coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 #androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
