@@ -66,14 +66,15 @@ interface NetworkService {
     ): SimpleResponse
 
     @PUT
-    suspend fun getMediaVisitsByVisitUid(
+    suspend fun getImagesVisitByVisitUid(
         @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
-        @Body payload: GetMediaVisitsByVisitUidRequest
+        @Body payload: GetImagesVisitByVisitUidRequest
     ): SimpleResponse
 
     @PUT
     suspend fun getMediaObjectByKey(
         @Url url:String = "https://wwsynfkf6lzk6ezzjqvs27wdj40vbelj.lambda-url.ap-southeast-1.on.aws/",
+        //@Url url: String = "https://hb45lxkaswotq4lqa2v6tjool40znrnp.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetMediaObjectByKeyRequest
     ): SimpleResponse
 }

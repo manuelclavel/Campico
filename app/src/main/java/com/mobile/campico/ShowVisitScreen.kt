@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -30,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,9 +56,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
 import kotlin.io.encoding.Base64
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+
 //import android.util.Base64
-
-
 
 
 fun jsonArrayStringToMediaVisitList(jsonString: String): List<MediaVisit> {
@@ -63,112 +68,107 @@ fun jsonArrayStringToMediaVisitList(jsonString: String): List<MediaVisit> {
     val mediaVisitsArray = gson.fromJson(jsonString, Array<MediaVisit>::class.java)
     return mediaVisitsArray.toList()
 }
+
 @Composable
-fun MediaVisitList(
+fun ImagePagerBuilder(
     mediaVisits: List<MediaVisit>,
-    networkService: NetworkService,
-    displayBitmap: (Bitmap) -> Unit
+    networkService: NetworkService
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val appContext = context.applicationContext
     var code by remember { mutableIntStateOf(0) }
     var message by remember { mutableStateOf("") }
-
     var token: String by remember { mutableStateOf("") }
     var email: String by remember { mutableStateOf("") }
+    val bitmaps = remember {  mutableStateListOf<Bitmap?>().apply {
+        addAll(List(mediaVisits.size) { null }) //
+    } }
 
+    val pagerState = rememberPagerState(pageCount = {
+        mediaVisits.size
+    })
 
-    LaunchedEffect(Unit) {
-        val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
-        val preferences = preferencesFlow.first()
-        token = preferences[TOKEN] ?: ""
-        email = preferences[EMAIL] ?: ""
-    }
+    LaunchedEffect(pagerState.currentPage) {
+        Log.d("CAMPICO", "CREATING a page: " + pagerState.pageCount)
+        if (bitmaps[pagerState.currentPage] == null) {
+            val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
+            val preferences = preferencesFlow.first()
+            token = preferences[TOKEN] ?: ""
+            email = preferences[EMAIL] ?: ""
 
-    LazyColumn(
-        modifier = Modifier.padding(16.dp)
-    ) {
-        stickyHeader {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.LightGray)
-                    .padding(6.dp)
-                    .height(IntrinsicSize.Min) // Key modifier for vertical divider height
+            scope.launch {
+                Log.d("CAMPICO", "GETTING the bitmap...")
+                withContext(Dispatchers.IO) {
+                    try {
+                        // This line pauses until the response is received
+                        val result = networkService.getMediaObjectByKey(
+                            payload = GetMediaObjectByKeyRequest(
+                                token = token,
+                                email = email,
+                                key = mediaVisits[pagerState.currentPage].s3key,
+                            )
+                        )
+                        code = result.code
+                        message = result.message
+                        //The error "Exceeded maximum allowed payload size
+                        // (6291556 bytes)" occurs because your AWS Lambda
+                        // function's request or response payload has exceeded
+                        // the hard limit of 6 MB for synchronous invocations.
+                        // This is a fixed quota and cannot be increased
+                        // by an AWS support request.
+                        //Amazon AWS Documentation
+                       if (code == 200) {
+                            val response = networkService.getBase64Image(message)
+                            val base64String =
+                                response.string() // Or response.string().replace("data:image/png;base64,", "") if data URI
+                            val decodedBytes = java.util.Base64.getDecoder()
+                                .decode(base64String) // [Link: Base64.Decoder https://docs.oracle.com/javase/8/docs/api/java/util/Base64.Decoder.html] [1]
+                            val decodedBitmap =
+                                BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                           //val base64String = result.string()
+                           //val decodedBytes = java.util.Base64.getDecoder()
+                           //    .decode(base64String) // [Link: Base64.Decoder https://docs.oracle.com/javase/8/docs/api/java/util/Base64.Decoder.html] [1]
+                           //val decodedBitmap =
+                           //    BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                           bitmaps[pagerState.currentPage] = decodedBitmap
 
-            ) {
-                Row(modifier =
-                    Modifier.padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
-                {
-                    Text(text= "Key", modifier = Modifier.width(150.dp), fontWeight = FontWeight.Bold)
+                        } else {
+                            Log.d("CAMPICO", "ERROR MESSAGE " + message)
+
+                        }
+
+                         } catch (e: Exception) {
+                        message = "There was an error in the request."
+                        Log.d("CAMPICO", "Unexpected exception: $e")
+                    }
                 }
+
+
             }
+        } else {
+            //Log.d("CAMPICO", "Bitmaps: " + bitmaps.size)
+
         }
-        items(
-            items = mediaVisits,
-            key = { mediaVisit -> mediaVisit.uid }
-        ) { mediaVisit ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(width = 1.dp, color = Color.LightGray)
-                    .padding(6.dp)
-                    .height(IntrinsicSize.Min) // Key modifier for vertical divider height
-                    .clickable(onClick = {
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                try {
-                                    val result = networkService.getMediaObjectByKey(
-                                        payload = GetMediaObjectByKeyRequest(
-                                            token = token,
-                                            email = email,
-                                            key = mediaVisit.s3key,
-                                        )
-                                    )
-                                    code = result.code
-                                    message = result.message
-
-                                    if (code == 200) {
-                                        val response = networkService.getBase64Image(message)
-                                        val base64String = response.string() // Or response.string().replace("data:image/png;base64,", "") if data URI
-                                        val decodedBytes = java.util.Base64.getDecoder().decode(base64String) // [Link: Base64.Decoder https://docs.oracle.com/javase/8/docs/api/java/util/Base64.Decoder.html] [1]
-                                        val decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-
-                                        displayBitmap(decodedBitmap)
-
-                                        Log.d("CAMPICO", message)
-                                    } else {
-                                        Log.d("CAMPICO", message)
-
-                                    }
-
-                                    //Prefer ApplicationContext: When you need a Context for operations that do not interact with the UI
-                                    //(e.g., file operations, database access, accessing resources like strings or drawables),
-                                    // use the application context.
-                                    //The application context lives for the lifetime of your app and is safe to use on any thread.
-                                } catch (e: Exception) {
-                                    message = "There was an error in the request."
-                                    Log.d("CAMPICO", "Unexpected exception: $e")
-                                }
-                            }
-
-                        }
-                        }
-                    )
-            ) {
-                Row(modifier =
-                    Modifier.padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
-                {
-                    Text(text= mediaVisit.s3key,
-                        modifier = Modifier.width(150.dp))
-                }
-            }
+    }
+    // 2. Use HorizontalPager to create a swipeable interface
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxSize()
+    ) { pageIndex ->
+        Log.d("CAMPICO", "Page index:" + pageIndex)
+        Log.d("CAMPICO", "Page index:" + pageIndex)
+         bitmaps[pageIndex]?.let {
+                Image(
+                    bitmap = it.asImageBitmap(), // Convert to Compose's ImageBitmap
+                    contentDescription = "Image $pageIndex", // Content description for accessibility
+                    contentScale = ContentScale.Fit, // Adjust the image scaling as needed
+                    modifier = Modifier.fillMaxSize()
+                )
         }
     }
 }
+
 
 fun jsonArrayStringToVisit(jsonString: String): Visit {
     val gson = Gson()
@@ -197,8 +197,6 @@ fun ShowVisitScreen(
 
     var visit: Visit? by remember { mutableStateOf(Visit(uid = 0, Date())) }
 
-    var bitmapState by remember { mutableStateOf<Bitmap?>(null) }
-
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -209,9 +207,7 @@ fun ShowVisitScreen(
 
     var mediaVisits by remember { mutableStateOf(emptyList<MediaVisit>()) }
 
-    val displayBitMap = fun(bitmap: Bitmap){
-        bitmapState = bitmap
-    }
+
     LaunchedEffect(Unit) {
         val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
         val preferences = preferencesFlow.first()
@@ -229,13 +225,7 @@ fun ShowVisitScreen(
                     )
                     code = result.code
                     message = result.message
-
-
-                    //Prefer ApplicationContext: When you need a Context for operations that do not interact with the UI
-                    //(e.g., file operations, database access, accessing resources like strings or drawables),
-                    // use the application context.
-                    //The application context lives for the lifetime of your app and is safe to use on any thread.
-                } catch (e: Exception) {
+            } catch (e: Exception) {
                     message = "There was an error in the request."
                     Log.d("CAMPICO", "Unexpected exception: $e")
                 }
@@ -248,20 +238,21 @@ fun ShowVisitScreen(
             }
 
         }
-        // get list of media-visits
+        // get list of media-image-visits
         scope.launch {
             withContext(Dispatchers.IO) {
                 try {
-                    val result = networkService.getMediaVisitsByVisitUid(
-                        payload = GetMediaVisitsByVisitUidRequest(
+                    val result = networkService.getImagesVisitByVisitUid(
+                        payload = GetImagesVisitByVisitUidRequest(
                             token = token,
                             email = email,
-                            visitUid = uid
+                            visitUid = uid,
+                            mediaType = 0
                         )
                     )
                     code = result.code
                     message = result.message
-                    Log.d("CAMPICO", message)
+                    //Log.d("CAMPICO", message)
 
                 } catch (e: Exception) {
                     message = "There was an error in the request."
@@ -269,8 +260,10 @@ fun ShowVisitScreen(
                 }
             }
             if (code == 200) {
+                Log.d("CAMPICO", "DOWNLOADED: " + message)
                 // edit the preferences and save email
                 mediaVisits = jsonArrayStringToMediaVisitList(message)
+                Log.d("CAMPICO", "DOWNLOADED: " + mediaVisits)
             } else {
                 changeMessage(message)
             }
@@ -296,29 +289,28 @@ fun ShowVisitScreen(
                 label = { Text("date") }
             )
 
-            //Button(
-            //    modifier = Modifier.semantics { contentDescription = "Edit" },
-            //    onClick = {
-            //navigateToEditTree(tree)
-            //    })
-            // {
-            //     Text("Edit")
-            // }
+
             Spacer(
                 modifier = Modifier.size(16.dp)
             )
-            MediaVisitList(
-                mediaVisits = mediaVisits,
-                networkService = networkService,
-                displayBitmap = displayBitMap
-            )
+            if (mediaVisits.isNotEmpty()) {
+                    ImagePagerBuilder(
+                        mediaVisits = mediaVisits,
+                        networkService = networkService
+                    )
+                }
+            //MediaVisitList(
+            //    mediaVisits = mediaVisits,
+            //    networkService = networkService,
+            //    displayBitmap = displayBitMap
+            //)
 
-           if (bitmapState != null){
-                AsyncImage(
-                    model = bitmapState, // Pass the Bitmap directly
-                    contentDescription = "Decoded Image"
-                )
-            }
+            //if (bitmapState != null){
+            //     AsyncImage(
+            //         model = bitmapState, // Pass the Bitmap directly
+            //         contentDescription = "Decoded Image"
+            //     )
+            // }
 
             Button(
                 modifier = Modifier.semantics { contentDescription = "Delete" },
@@ -383,7 +375,7 @@ fun ShowVisitScreen(
             // Upload the selected image
             //changeMessage("Backing up flashcard database in S3...")
 
-            Button(onClick= {
+            Button(onClick = {
                 scope.launch {
                     withContext(Dispatchers.IO) {
                         //val byteArrayOutputStream = ByteArrayOutputStream()
@@ -392,8 +384,7 @@ fun ShowVisitScreen(
                             val byteArray: ByteArray
                             // Use the 'use' extension function to ensure
                             // the InputStream is automatically closed
-                            context.contentResolver.openInputStream(uri)?.use {
-                                    inputStream ->
+                            context.contentResolver.openInputStream(uri)?.use { inputStream ->
                                 byteArray = inputStream.readBytes()
                                 val encodedString = Base64.encode(byteArray)
                                 val response = visit?.uid?.let {
@@ -412,7 +403,8 @@ fun ShowVisitScreen(
                                             s3key = s3key,
                                             content = encodedString,
                                             token = token,
-                                            email = email
+                                            email = email,
+                                            mediaType = 0
                                         )
                                     )
                                 }
@@ -437,7 +429,7 @@ fun ShowVisitScreen(
                     }
                 }
             }
-            ){Text("Upload")}
+            ) { Text("Upload") }
         }
 
 

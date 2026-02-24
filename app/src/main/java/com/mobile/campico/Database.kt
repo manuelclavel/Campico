@@ -84,7 +84,7 @@ data class Fruit(
 )
 
 data class MediaVisit(
-   val uid: Int,  val visitUid: Int, val s3key: String
+   val uid: Int,  val visitUid: Int, val s3key: String, val mediaType: Int
 )
 
 @Dao
