@@ -101,7 +101,7 @@ fun jsonArrayStringToMediaVisitList(jsonString: String): List<MediaVisit> {
 fun BitmapsPageBuilder(
     mediaVisits: List<MediaVisit>,
     networkService: NetworkService
-){
+) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val appContext = context.applicationContext
@@ -109,13 +109,27 @@ fun BitmapsPageBuilder(
     var message by remember { mutableStateOf("") }
     var token: String by remember { mutableStateOf("") }
     var email: String by remember { mutableStateOf("") }
-    val mediaVisits = remember { mutableStateListOf<MediaVisit>().apply { addAll(mediaVisits) } }
-    val bitmaps = remember { mutableStateListOf<Bitmap?>().apply { addAll(List(mediaVisits.size) { null })}}
-    val pagerState = rememberPagerState(pageCount = { mediaVisits.size } )
+    //val mediaVisits = remember { mutableStateListOf<MediaVisit>()  }
+    //val bitmaps =
+    //    remember { mutableStateListOf<Bitmap?>().apply { addAll(List(mediaVisits) { null }) } }
+    val bitmaps = remember {
+        mutableStateListOf<Bitmap?>(*Array<Bitmap?>(mediaVisits.size) { null })
+    }
+    val pagerState = rememberPagerState(pageCount = { mediaVisits.size })
 
-    LaunchedEffect(pagerState.currentPage) {
-        Log.d("CAMPICO", "CREATING a page: " + pagerState.pageCount)
-        if (bitmaps[pagerState.currentPage] == null) {
+    //Log.d("CAMPICO", "Building the bitmaps for " + mediaVisits.size)
+    //LaunchedEffect(pagerState.currentPage) {
+    LaunchedEffect(mediaVisits.size) {
+        //mediaVisits = mediaVisits
+        Log.d("CAMPICO", "Building the images for " + mediaVisits.size)
+
+        //val mediaVisitsIterator = mediaVisits.iterator()
+        //bitmaps.clear()
+        mediaVisits.forEach { mediaVisit ->
+            // Perform action with the 'item'
+
+            //Log.d("CAMPICO", "CREATING a page: " + mediaVisit.s3key)
+            //if (bitmaps[pagerState.currentPage] == null) {
             val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
             val preferences = preferencesFlow.first()
             token = preferences[TOKEN] ?: ""
@@ -130,7 +144,7 @@ fun BitmapsPageBuilder(
                             payload = GetMediaObjectByKeyRequest(
                                 token = token,
                                 email = email,
-                                key = mediaVisits[pagerState.currentPage].s3key,
+                                key = mediaVisit.s3key,
                             )
                         )
                         code = result.code
@@ -149,8 +163,12 @@ fun BitmapsPageBuilder(
                             val decodedBytes = java.util.Base64.getDecoder()
                                 .decode(base64String) // [Link: Base64.Decoder https://docs.oracle.com/javase/8/docs/api/java/util/Base64.Decoder.html] [1]
                             val decodedBitmap =
-                                BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                            bitmaps[pagerState.currentPage] = decodedBitmap
+                                BitmapFactory.decodeByteArray(
+                                    decodedBytes,
+                                    0,
+                                    decodedBytes.size
+                                )
+                            bitmaps.add(decodedBitmap)
 
                         } else {
                             Log.d("CAMPICO", "ERROR MESSAGE " + message)
@@ -161,35 +179,36 @@ fun BitmapsPageBuilder(
                         Log.d("CAMPICO", "Unexpected exception: $e")
                     }
                 }
-
-
             }
-        } else {
-            //Log.d("CAMPICO", "Bitmaps: " + bitmaps.size)
+
+
         }
     }
+    //else {
+    //Log.d("CAMPICO", "Bitmaps: " + bitmaps.size)
+    //}
+    //}
     // 2. Use HorizontalPager to create a swipeable interface
 
-    HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.fillMaxSize()
-        
-    ) { pageIndex ->
-        //Log.d("CAMPICO", "Page index:" + pageIndex)
-        //Log.d("CAMPICO", "Page index:" + pageIndex)
-        bitmaps[pageIndex]?.let {
-            Image(
-                bitmap = it.asImageBitmap(), // Convert to Compose's ImageBitmap
-                contentDescription = "Image $pageIndex", // Content description for accessibility
-                contentScale = ContentScale.Fit, // Adjust the image scaling as needed
-                modifier = Modifier.fillMaxSize()
-            )
+    if (bitmaps.isNotEmpty()) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { pageIndex ->
+            //Log.d("CAMPICO", "Page index:" + pageIndex)
+            if (bitmaps[pageIndex] != null) {
+                bitmaps[pageIndex]?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(), // Convert to Compose's ImageBitmap
+                        contentDescription = "Image $pageIndex", // Content description for accessibility
+                        contentScale = ContentScale.Fit, // Adjust the image scaling as needed
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
     }
 }
-
-
-
 
 fun jsonArrayStringToVisit(jsonString: String): Visit {
     val gson = Gson()
@@ -285,19 +304,24 @@ fun ShowVisitScreen(
                                         visit?.let { visit ->
                                             scope.launch {
                                                 withContext(Dispatchers.IO) {
-                                                    val result = networkService.getImagesVisitByVisitUid(
-                                                        payload = GetImagesVisitByVisitUidRequest(
-                                                            token = token,
-                                                            email = email,
-                                                            visitUid = visit.uid,
-                                                            mediaType = 0
+                                                    val result =
+                                                        networkService.getImagesVisitByVisitUid(
+                                                            payload = GetImagesVisitByVisitUidRequest(
+                                                                token = token,
+                                                                email = email,
+                                                                visitUid = visit.uid,
+                                                                mediaType = 0
+                                                            )
                                                         )
-                                                    )
                                                     val code = result.code
                                                     val message = result.message
                                                     if (code == 200) {
-                                                        val updateMediaVisits = jsonArrayStringToMediaVisitList(message)
-                                                        Log.d("CAMPICO", "Refreshing the pager with now: " + updateMediaVisits.size)
+                                                        val updateMediaVisits =
+                                                            jsonArrayStringToMediaVisitList(message)
+                                                        Log.d(
+                                                            "CAMPICO",
+                                                            "Refreshing the pager with now: " + updateMediaVisits.size
+                                                        )
                                                         refreshMediaVisits(updateMediaVisits)
                                                     }
                                                 }
@@ -355,8 +379,9 @@ fun ShowVisitScreen(
                         val code = result.code
                         val message = result.message
                         if (code == 200) {
+                            Log.d("CAMPICO", "Getting the list of media ")
                             mediaVisits = jsonArrayStringToMediaVisitList(message)
-                            refreshMediaVisits(mediaVisits)
+                            Log.d("CAMPICO","Total of media " + mediaVisits.size)
                         }
                     }
                 }
@@ -456,23 +481,23 @@ fun ShowVisitScreen(
             //    modifier = Modifier.size(8.dp)
             //)
             //if (refresh) {
-            if (number > 0) {
+            //if (number > 0) {
                 //if (mediaVisits.isNotEmpty()) {
-                Log.d("CAMPICO", "changing to " + number)
+              //  Log.d("CAMPICO", "changing to " + number)
                 BitmapsPageBuilder(
                     mediaVisits = mediaVisits,
                     networkService = networkService
                 )
 
-                    //refresh = false
-                    //ImagePagerBuilder(
-                    //        //mediaVisits = mediaVisits,
-                    //        networkService = networkService,
-                    //        refreshMediaVisits = refreshMediaVisits,
-                    //        visitUid = visit.uid
-                    //)
+                //refresh = false
+                //ImagePagerBuilder(
+                //        //mediaVisits = mediaVisits,
+                //        networkService = networkService,
+                //        refreshMediaVisits = refreshMediaVisits,
+                //        visitUid = visit.uid
+                //)
 
-            }
+            //}
 
 
             /*
