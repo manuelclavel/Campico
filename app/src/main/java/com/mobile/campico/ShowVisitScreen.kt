@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.scale
 import androidx.datastore.preferences.core.Preferences
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -50,14 +49,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.Date
-import kotlin.collections.get
-import kotlin.collections.set
 import kotlin.io.encoding.Base64
-import kotlin.text.get
-import kotlin.text.set
 
-
-//import android.util.Base64
 @Composable
 fun BitmapsPageBuilder(
     mediaVisits: List<MediaVisit>,
@@ -73,24 +66,19 @@ fun BitmapsPageBuilder(
     //val mediaVisits = remember { mutableStateListOf<MediaVisit>()  }
     //val bitmaps =
     //    remember { mutableStateListOf<Bitmap?>().apply { addAll(List(mediaVisits) { null }) } }
-    var bitmaps = remember {
-        mutableStateListOf<Bitmap?>(*Array<Bitmap?>(mediaVisits.size) { null })
+    val bitmaps = remember {
+        mutableStateListOf<Bitmap?>()
+        //mutableStateListOf<Bitmap?>(*Array<Bitmap?>(mediaVisits.size) { null })
     }
     val pagerState = rememberPagerState(pageCount = { bitmaps.size })
 
-    //Log.d("CAMPICO", "Building the bitmaps for " + mediaVisits.size)
-    //LaunchedEffect(pagerState.currentPage) {
     LaunchedEffect(mediaVisits.size) {
-        //bitmaps = mutableStateListOf<Bitmap?>(*Array<Bitmap?>(0) { null })
-        bitmaps.clear()
+        bitmaps.clear() // this is key to force recomposition later
+        mutableStateListOf<Bitmap?>(*Array<Bitmap?>(mediaVisits.size) { null })
         Log.d("CAMPICO", "Building the images for " + mediaVisits.size)
         //val mediaVisitsIterator = mediaVisits.iterator()
         //bitmaps.clear()
         mediaVisits.forEachIndexed { index, mediaVisit ->
-            // Perform action with the 'item'
-
-            //Log.d("CAMPICO", "CREATING a page: " + mediaVisit.s3key)
-            //if (bitmaps[pagerState.currentPage] == null) {
             val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
             val preferences = preferencesFlow.first()
             token = preferences[TOKEN] ?: ""
@@ -110,13 +98,6 @@ fun BitmapsPageBuilder(
                         )
                         code = result.code
                         message = result.message
-                        //The error "Exceeded maximum allowed payload size
-                        // (6291556 bytes)" occurs because your AWS Lambda
-                        // function's request or response payload has exceeded
-                        // the hard limit of 6 MB for synchronous invocations.
-                        // This is a fixed quota and cannot be increased
-                        // by an AWS support request.
-                        //Amazon AWS Documentation
                         if (code == 200) {
                             val response = networkService.getBase64Image(message)
                             val base64String =
@@ -142,18 +123,16 @@ fun BitmapsPageBuilder(
                     }
                 }
             }
-
-
         }
     }
 
-    if (bitmaps.isNotEmpty()) {
+    //if (bitmaps.isNotEmpty()) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { pageIndex ->
             Log.d("CAMPICO", "Page index:" + pageIndex)
-            if (bitmaps.size > pageIndex) {
+            //if (bitmaps.size > pageIndex) {
                 bitmaps[pageIndex]?.let {
                     Image(
                         bitmap = it.asImageBitmap(), // Convert to Compose's ImageBitmap
@@ -164,8 +143,8 @@ fun BitmapsPageBuilder(
                 }
 
             }
-        }
-    }
+       //}
+    //}
 }
     fun compressImageToLessThan1MB(imageBytes: ByteArray, maxFileSize: Long = 1024000): ByteArray {
         // 1. Decode the original ByteArray into a Bitmap
