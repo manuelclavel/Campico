@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- <files-path> represents Context.getFilesDir() -->
+    <files-path name="my_internal_files" path="." />
+
+    <!-- <cache-path> represents Context.getCacheDir() -->
+    <cache-path name="my_cache_files" path="." />
+
+    <!-- <external-path> represents Environment.getExternalStorageDirectory() -->
+    <external-path name="my_external_files" path="." />
+
+    <!-- <external-files-path> represents Context.getExternalFilesDir(null) -->
+    <external-files-path name="my_external_files" path="." />
+</paths>

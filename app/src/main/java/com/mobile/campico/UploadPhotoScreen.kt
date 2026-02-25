@@ -1,7 +1,11 @@
 package com.mobile.campico
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,14 +30,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.core.content.FileProvider
 import androidx.datastore.preferences.core.Preferences
 import coil.compose.rememberAsyncImagePainter
+import com.google.android.gms.common.wrappers.Wrappers.packageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.io.encoding.Base64
+
+fun getTmpFileUri(context: Context): Uri {
+    val tempFile = File.createTempFile(
+        "temp_image_${System.currentTimeMillis()}", ".png", context.cacheDir
+    ).apply {
+        createNewFile()
+    }
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile)
+}
 
 
 @Composable
@@ -56,13 +73,51 @@ fun UploadPhotoScreen(networkService: NetworkService, changeMessage: (String) ->
 
     }
 
-    val launcher = rememberLauncherForActivityResult(
+    val pickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri: Uri? ->
             imageUri = uri
         }
     )
 
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                Log.d("CAMPICO", "successfully capturing image")
+                // Photo captured successfully, imageUri now points to the file
+                // You can initiate the upload here
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        changeMessage("Uploading object in S3...")
+                        imageUri?.let { uri ->
+                            val byteArray: ByteArray
+                            // Use the 'use' extension function to ensure
+                            // the InputStream is automatically closed
+                            context.contentResolver.openInputStream(uri)?.use {
+                                    inputStream ->
+                                byteArray = inputStream.readBytes()
+
+                                val encodedString = Base64.encode(byteArray)
+                                val response = networkService.uploadMediaVisitObject(
+                                    upload = UploadMediaVisitRequest(
+                                        content = encodedString,
+                                        token = token,
+                                        email = email,
+                                        s3key = "test",
+                                        mediaType = 0,
+                                        visitUid = 8
+                                    )
+                                )
+                                changeMessage(response.toString())
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    )
 
     Column(
         modifier = Modifier
@@ -74,13 +129,21 @@ fun UploadPhotoScreen(networkService: NetworkService, changeMessage: (String) ->
         // Button to launch the photo picker
         Button(onClick = {
             // Launch the picker for a single image
-            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            pickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }) {
             Text(text = "Pick Image from Gallery")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+    Button(onClick = {
+        val uri = getTmpFileUri(context)
+        imageUri = uri
+        cameraLauncher.launch(uri)
+    }) {
+        Text("Take Photo & Upload")
+    }
+    Spacer(modifier = Modifier.height(16.dp))
         // Display the selected image
         imageUri?.let { uri ->
             Image(

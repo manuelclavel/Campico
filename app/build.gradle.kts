@@ -115,6 +115,11 @@ dependencies {
     implementation(libs.coil.compose) // Use the latest version
     implementation(libs.coil3.coil.network.okhttp)
 
+    // extended icons
+    implementation("androidx.compose.material:material-icons-extended")
+
+
+
 
     // aws sdk
     //implementation(platform(awssdk.bom))
