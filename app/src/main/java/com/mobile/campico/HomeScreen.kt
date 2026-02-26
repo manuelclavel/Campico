@@ -121,6 +121,7 @@ fun HomeScreen(
             )
         }
 
+        /*
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -131,6 +132,9 @@ fun HomeScreen(
             Text("Add Tree", modifier = Modifier.semantics { contentDescription = "AddTree" })
         }
 
+         */
+
+        /*
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -140,8 +144,9 @@ fun HomeScreen(
             }) {
             Text("Scan QRCode", modifier = Modifier.semantics { contentDescription = "ScanQRCode" })
         }
+         */
 
-
+        /*
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -159,8 +164,7 @@ fun HomeScreen(
                 modifier = Modifier.semantics { contentDescription = "BackUpDb" }
             )
         }
-
-
+         */
     }
 }
 

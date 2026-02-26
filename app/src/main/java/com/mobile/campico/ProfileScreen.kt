@@ -71,7 +71,7 @@ fun ProfileScreen(
                 modifier = Modifier.semantics { contentDescription = "Logout" }
             )
         }
-        
+
          */
     }
 }

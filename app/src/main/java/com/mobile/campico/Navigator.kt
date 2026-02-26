@@ -57,6 +57,7 @@ fun Navigator(
 
     /* topbar actions */
     var showAddVisitButton by remember { mutableStateOf(false) }
+    var showAddTreeButton by remember { mutableStateOf(false) }
     var showProfileButton by remember { mutableStateOf(false) }
     var showLogoutButton by remember { mutableStateOf(false) }
 
@@ -316,18 +317,27 @@ fun Navigator(
                         if (it.hasRoute<HomeRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
+                            showAddTreeButton = false
                             showLogoutButton = false
                         } else if (it.hasRoute<SearchVisitsRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = true
+                            showAddTreeButton = false
+                            showLogoutButton = false
+                        } else if (it.hasRoute<SearchTreesRoute>()) {
+                            showProfileButton = true
+                            showAddVisitButton = false
+                            showAddTreeButton = true
                             showLogoutButton = false
                         } else if (it.hasRoute<AddVisitRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
+                            showAddTreeButton = false
                             showLogoutButton = false
                         } else if (it.hasRoute<ProfileRoute>()) {
                             showProfileButton = false
                             showAddVisitButton = false
+                            showAddTreeButton = false
                             showLogoutButton = true
                         }
 
@@ -343,6 +353,19 @@ fun Navigator(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "AddVisitButton"
+                            )
+                        }
+                    }
+                    if (showAddTreeButton) {
+                        IconButton(
+                            modifier = Modifier
+                                .semantics { contentDescription = "navigateToAddTree" },
+                            onClick = {
+                                navigateToAddTree()
+                            }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "AddTreeButton"
                             )
                         }
                     }

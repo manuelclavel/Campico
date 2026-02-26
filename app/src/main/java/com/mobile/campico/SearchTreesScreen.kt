@@ -46,10 +46,6 @@ fun jsonArrayStringToTreeList(jsonString: String): List<Tree> {
     // A common approach is to parse it as an Array and convert to a List
     val treesArray = gson.fromJson(jsonString, Array<Tree>::class.java)
     return treesArray.toList()
-
-    // Another method using TypeToken for more complex types, useful in generic functions
-    // val listType = object : TypeToken<List<Person>>() {}.type
-    // return gson.fromJson(jsonString, listType)
 }
 @Composable
 fun NumberFruitsByTreeUidCell(uidTree: Int,
@@ -72,6 +68,7 @@ fun TreeList(
     navigateToTreeDisplay: (Tree) -> Unit,
     trees: List<Tree>,
     getTotalFruitsByTreeUid: suspend (Int) -> Int
+    //getTotalFruitsByTreeUid: suspend (Int) -> Int
 ) {
     LazyColumn(
         modifier = Modifier.padding(16.dp)
@@ -124,7 +121,8 @@ fun TreeList(
                         thickness = 1.dp,
                         color = Color.DarkGray // Customize the color
                     )
-                    NumberFruitsByTreeUidCell(tree.uid, getTotalFruitsByTreeUid)
+                    Text("---")
+                    //NumberFruitsByTreeUidCell(tree.uid, getTotalFruitsByTreeUid)
                 }
             }
         }
@@ -204,7 +202,7 @@ fun SearchTreesScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Spacer(
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(8.dp)
         )
         TreeList(
             trees = trees,
