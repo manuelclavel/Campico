@@ -47,15 +47,62 @@ fun jsonArrayStringToTreeList(jsonString: String): List<Tree> {
     val treesArray = gson.fromJson(jsonString, Array<Tree>::class.java)
     return treesArray.toList()
 }
+
+fun jsonArrayStringToInt(jsonString: String): Int {
+    val gson = Gson()
+    // A common approach is to parse it as an Array and convert to a List
+    val totalArray = gson.fromJson(jsonString, Array<Total>::class.java)
+    return totalArray[0].total
+}
+
 @Composable
-fun NumberFruitsByTreeUidCell(uidTree: Int,
-                           getTotalFruitsByTreeUid: suspend (Int) -> Int) {
+fun NumberFruitsByTreeUidCell(
+    treeUid: Int,
+    getTotalFruitsByTreeUid: suspend (Int) -> Int,
+    networkService: NetworkService
+) {
+    val context = LocalContext.current
+    val appContext = context.applicationContext
+
+    var code by remember { mutableIntStateOf(0) }
+    var message by remember { mutableStateOf("") }
+
+    var token:String by remember {mutableStateOf("")}
+    var email:String by remember {mutableStateOf("")}
+
     var cellValue by remember { mutableStateOf("") }
 
     // Use LaunchedEffect to run the suspend function safely
     LaunchedEffect(Unit) {
-        // This runs in a coroutine
-        cellValue = getTotalFruitsByTreeUid(uidTree).toString()
+        val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
+        val preferences = preferencesFlow.first()
+        token = preferences[TOKEN] ?: ""
+        email = preferences[EMAIL] ?: ""
+        launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val result = networkService.getTotalFruitsByTreeUid(
+                        payload = GetTotalFruitsByTreeUidRequest(
+                            token = token,
+                            email = email,
+                            treeUid = treeUid
+                        )
+                    )
+                    code = result.code
+                    message = result.message
+                }
+                catch (e: Exception) {
+                    message = "There was an error in the request."
+                    Log.d("CAMPICO", "Unexpected exception: $e")
+                }
+            }
+            if (code == 200) {
+                cellValue = jsonArrayStringToInt(message).toString()
+            } else {
+                cellValue = "---"
+            }
+
+        }
     }
 
     // The UI displays the current state (initially "Loading...", then the fetched data)
@@ -67,9 +114,10 @@ fun NumberFruitsByTreeUidCell(uidTree: Int,
 fun TreeList(
     navigateToTreeDisplay: (Tree) -> Unit,
     trees: List<Tree>,
-    getTotalFruitsByTreeUid: suspend (Int) -> Int
-    //getTotalFruitsByTreeUid: suspend (Int) -> Int
+    getTotalFruitsByTreeUid: suspend (Int) -> Int,
+    networkService: NetworkService
 ) {
+
     LazyColumn(
         modifier = Modifier.padding(16.dp)
     ) {
@@ -121,8 +169,10 @@ fun TreeList(
                         thickness = 1.dp,
                         color = Color.DarkGray // Customize the color
                     )
-                    Text("---")
-                    //NumberFruitsByTreeUidCell(tree.uid, getTotalFruitsByTreeUid)
+                   NumberFruitsByTreeUidCell(
+                       treeUid = tree.uid,
+                       getTotalFruitsByTreeUid = getTotalFruitsByTreeUid,
+                       networkService = networkService)
                 }
             }
         }
@@ -207,7 +257,8 @@ fun SearchTreesScreen(
         TreeList(
             trees = trees,
             navigateToTreeDisplay = navigateToTreeDisplay,
-            getTotalFruitsByTreeUid = getTotalFruitsByTreeUid
+            getTotalFruitsByTreeUid = getTotalFruitsByTreeUid,
+            networkService = networkService
         )
     }
 }

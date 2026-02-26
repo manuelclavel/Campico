@@ -3,6 +3,8 @@ package com.mobile.campico
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class Total (val total: Int)
+@Serializable
 data class UserCredential (val email: String)
 
 @Serializable
@@ -39,6 +41,13 @@ data class GetImagesVisitByVisitUidRequest(
     val query: String = "getMediaVisitByVisitUid",
     val visitUid: Int,
     val mediaType: Int
+)
+@Serializable
+data class GetTotalFruitsByTreeUidRequest(
+    val token: String,
+    val email: String,
+    val query: String = "getTotalFruitsByTreeUid",
+    val treeUid: Int
 )
 @Serializable
 data class SimpleResponse (val message: String, val code: Int)
