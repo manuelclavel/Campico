@@ -6,15 +6,11 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -26,15 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -51,102 +44,8 @@ import java.io.ByteArrayOutputStream
 import java.util.Date
 import kotlin.io.encoding.Base64
 
-@Composable
-fun BitmapsPageBuilder(
-    mediaVisits: List<MediaVisit>,
-    networkService: NetworkService
-) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val appContext = context.applicationContext
-    var code by remember { mutableIntStateOf(0) }
-    var message by remember { mutableStateOf("") }
-    var token: String by remember { mutableStateOf("") }
-    var email: String by remember { mutableStateOf("") }
-    //val mediaVisits = remember { mutableStateListOf<MediaVisit>()  }
-    //val bitmaps =
-    //    remember { mutableStateListOf<Bitmap?>().apply { addAll(List(mediaVisits) { null }) } }
-    val bitmaps = remember {
-        mutableStateListOf<Bitmap?>()
-        //mutableStateListOf<Bitmap?>(*Array<Bitmap?>(mediaVisits.size) { null })
-    }
-    val pagerState = rememberPagerState(pageCount = { bitmaps.size })
 
-    LaunchedEffect(mediaVisits.size) {
-        bitmaps.clear() // this is key to force recomposition later
-        mutableStateListOf<Bitmap?>(*Array<Bitmap?>(mediaVisits.size) { null })
-        Log.d("CAMPICO", "Building the images for " + mediaVisits.size)
-        //val mediaVisitsIterator = mediaVisits.iterator()
-        //bitmaps.clear()
-        mediaVisits.forEachIndexed { index, mediaVisit ->
-            val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
-            val preferences = preferencesFlow.first()
-            token = preferences[TOKEN] ?: ""
-            email = preferences[EMAIL] ?: ""
-
-            scope.launch {
-                Log.d("CAMPICO", "GETTING the bitmap for " + mediaVisits[index].s3key)
-                withContext(Dispatchers.IO) {
-                    try {
-                        // This line pauses until the response is received
-                        val result = networkService.getMediaObjectByKey(
-                            payload = GetMediaObjectByKeyRequest(
-                                token = token,
-                                email = email,
-                                key = mediaVisits[index].s3key,
-                            )
-                        )
-                        code = result.code
-                        message = result.message
-                        if (code == 200) {
-                            val response = networkService.getBase64Image(message)
-                            val base64String =
-                                response.string() // Or response.string().replace("data:image/png;base64,", "") if data URI
-                            val decodedBytes = java.util.Base64.getDecoder()
-                                .decode(base64String) // [Link: Base64.Decoder https://docs.oracle.com/javase/8/docs/api/java/util/Base64.Decoder.html] [1]
-                            val decodedBitmap =
-                                BitmapFactory.decodeByteArray(
-                                    decodedBytes,
-                                    0,
-                                    decodedBytes.size
-                                )
-                            //bitmaps.add(decodedBitmap)
-                            bitmaps.add(decodedBitmap)
-                            Log.d("CAMPICO", "GOT BITMAP" + mediaVisits[index].s3key)
-                        } else {
-                            Log.d("CAMPICO", "ERROR MESSAGE " + message)
-                        }
-
-                    } catch (e: Exception) {
-                        message = "There was an error in the request."
-                        Log.d("CAMPICO", "Unexpected exception: $e")
-                    }
-                }
-            }
-        }
-    }
-
-    //if (bitmaps.isNotEmpty()) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { pageIndex ->
-            Log.d("CAMPICO", "Page index:" + pageIndex)
-            //if (bitmaps.size > pageIndex) {
-                bitmaps[pageIndex]?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(), // Convert to Compose's ImageBitmap
-                        contentDescription = "Image $pageIndex", // Content description for accessibility
-                        contentScale = ContentScale.Fit, // Adjust the image scaling as needed
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-            }
-       //}
-    //}
-}
-    fun compressImageToLessThan1MB(imageBytes: ByteArray, maxFileSize: Long = 1024000): ByteArray {
+fun compressImageToLessThan1MB(imageBytes: ByteArray, maxFileSize: Long = 1024000): ByteArray {
         // 1. Decode the original ByteArray into a Bitmap
         var bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
@@ -333,8 +232,7 @@ fun BitmapsPageBuilder(
                     }
                 }
                 if (code == 200) {
-                    // edit the preferences and save email
-                    visit = jsonArrayStringToVisit(message)
+                   visit = jsonArrayStringToVisit(message)
                     scope.launch {
                         withContext(Dispatchers.IO) {
                             val result = networkService.getImagesVisitByVisitUid(
@@ -368,6 +266,7 @@ fun BitmapsPageBuilder(
 
             }
         }
+
         if (visit == null) {
             changeMessage("Visit not found")
         } else {
@@ -376,9 +275,7 @@ fun BitmapsPageBuilder(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                //Spacer(
-                //    modifier = Modifier.size(8.dp)
-                //)
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -453,35 +350,13 @@ fun BitmapsPageBuilder(
 
                 }
 
-                //Spacer(
-                //    modifier = Modifier.size(8.dp)
-                //)
-                //if (refresh) {
-                //if (number > 0) {
-                BitmapsPageBuilder(
+                MediaImageHorizontalPager(
                     mediaVisits = mediaVisits,
                     networkService = networkService
                 )
-
-
-                //    Log.d("CAMPICO", "CHANGE DETECTED!")
-                //BitmapsPageBuilder(
-                //    pmediaVisits = mediaVisits.toList(),
-                //    networkService = networkService
-                //)
-
-
-                //refresh = false
-                //ImagePagerBuilder(
-                //        //mediaVisits = mediaVisits,
-                //        networkService = networkService,
-                //        refreshMediaVisits = refreshMediaVisits,
-                //        visitUid = visit.uid
-                //)
-
-                //}
-
-
+            }
+        }
+    }
                 /*
             // Button to launch the photo picker
             Button(onClick = {
@@ -554,9 +429,7 @@ fun BitmapsPageBuilder(
             ) { Text("Upload") }
 
     */
-            }
-        }
-    }
+
 
 
 
