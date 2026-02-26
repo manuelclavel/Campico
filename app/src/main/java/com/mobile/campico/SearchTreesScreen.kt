@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -30,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
@@ -107,7 +113,7 @@ fun NumberFruitsByTreeUidCell(
 
     // The UI displays the current state (initially "Loading...", then the fetched data)
     Text(
-        text = cellValue, modifier = Modifier.width(50.dp)
+        text = cellValue, modifier = Modifier.width(70.dp)
     )
 }
 @Composable
@@ -115,7 +121,8 @@ fun TreeList(
     navigateToTreeDisplay: (Tree) -> Unit,
     trees: List<Tree>,
     getTotalFruitsByTreeUid: suspend (Int) -> Int,
-    networkService: NetworkService
+    networkService: NetworkService,
+    changeMessage: (String) -> Unit
 ) {
 
     LazyColumn(
@@ -132,7 +139,8 @@ fun TreeList(
             ) {
                 Row(modifier =
                     Modifier.padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                    verticalAlignment = Alignment.CenterVertically
+                )
                 {
                     Text(text= "Id", modifier = Modifier.width(50.dp), fontWeight = FontWeight.Bold)
                     VerticalDivider(
@@ -141,6 +149,13 @@ fun TreeList(
                         color = Color.DarkGray // Customize the color
                     )
                     Text(text = "# Fruits", modifier = Modifier.width(70.dp), fontWeight = FontWeight.Bold)
+                    VerticalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp), // Add horizontal padding for spacing
+                        thickness = 1.dp,
+                        color = Color.DarkGray // Customize the color
+                    )
+                    // Spacer that takes up all remaining space
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -159,9 +174,11 @@ fun TreeList(
                     }
                     )
             ) {
-                Row(modifier =
-                    Modifier.padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp),
+                    //horizontalArrangement = Arrangement.SpaceBetween, // Distributes children to the start and end
+                    verticalAlignment = Alignment.CenterVertically)
                 {
                     Text(text= tree.id, modifier = Modifier.width(50.dp))
                     VerticalDivider(
@@ -173,6 +190,23 @@ fun TreeList(
                        treeUid = tree.uid,
                        getTotalFruitsByTreeUid = getTotalFruitsByTreeUid,
                        networkService = networkService)
+                    VerticalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp), // Add horizontal padding for spacing
+                        thickness = 1.dp,
+                        color = Color.DarkGray // Customize the color
+                    )
+                    // Spacer that takes up all remaining space
+                    Spacer(modifier = Modifier.weight(1f))
+                    Button(
+                        modifier = Modifier.semantics { contentDescription = "Delete" },
+                        onClick = {
+                            changeMessage("Work in progress")
+                        })
+                    {
+                        Icon(Icons.Default.Delete, contentDescription = "DeleteTree")
+                        //Text("Delete")
+                    }
+
                 }
             }
         }
@@ -258,7 +292,8 @@ fun SearchTreesScreen(
             trees = trees,
             navigateToTreeDisplay = navigateToTreeDisplay,
             getTotalFruitsByTreeUid = getTotalFruitsByTreeUid,
-            networkService = networkService
+            networkService = networkService,
+            changeMessage = changeMessage
         )
     }
 }

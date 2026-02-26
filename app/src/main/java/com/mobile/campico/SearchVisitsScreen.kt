@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,7 +58,8 @@ fun jsonArrayStringToVisitList(jsonString: String): List<Visit> {
 @Composable
 fun VisitList(
     navigateToVisitDisplay: (Visit) -> Unit,
-    visits: List<Visit>
+    visits: List<Visit>,
+    changeMessage: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.padding(16.dp)
@@ -69,11 +73,22 @@ fun VisitList(
                     .height(IntrinsicSize.Min) // Key modifier for vertical divider height
 
             ) {
-                Row(modifier =
-                    Modifier.padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                Row(
+                    modifier =
+                        //Modifier.padding(6.dp),
+                        //horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                )
                 {
-                    Text(text= "Date", modifier = Modifier.width(150.dp), fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Date",
+                        modifier = Modifier.width(150.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                    /* delete */
                 }
             }
         }
@@ -93,11 +108,27 @@ fun VisitList(
                     )
             ) {
                 Row(modifier =
-                    Modifier.padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp) )
+                    //Modifier.padding(6.dp),
+                    //horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween, // Distributes children to the start and end
+                    verticalAlignment = Alignment.CenterVertically
+                )
                 {
                     Text(text= convertDateToStringDate(visit.date),
                         modifier = Modifier.width(150.dp))
+                    Button(
+                        modifier = Modifier.semantics { contentDescription = "Delete" },
+                        onClick = {
+                            changeMessage("Work in progress")
+
+                        })
+                    {
+                        Icon(Icons.Default.Delete, contentDescription = "DeleteVisit")
+                        //Text("Delete")
+                    }
                 }
             }
         }
@@ -125,7 +156,6 @@ fun SearchVisitsScreen(
     var visits by remember { mutableStateOf(emptyList<Visit>()) }
 
     LaunchedEffect(Unit) {
-        //changeShowAddVisitButton(true);
         val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
         val preferences = preferencesFlow.first()
         token = preferences[TOKEN] ?: ""
@@ -184,9 +214,11 @@ fun SearchVisitsScreen(
         )
         VisitList(
             visits = visits,
-            navigateToVisitDisplay = navigateToVisitDisplay
+            navigateToVisitDisplay = navigateToVisitDisplay,
+            changeMessage = changeMessage
         )
 
+        /*
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -196,5 +228,7 @@ fun SearchVisitsScreen(
             }) {
             Text("Add Visit", modifier = Modifier.semantics { contentDescription = "AddVisit" })
         }
+
+         */
     }
 }

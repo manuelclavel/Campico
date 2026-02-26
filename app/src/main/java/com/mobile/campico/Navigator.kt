@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +40,8 @@ import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import java.util.Date
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Navigator(
@@ -55,9 +55,14 @@ fun Navigator(
 
     var message by remember { mutableStateOf("") }
 
+    /* topbar selections */
+
+    var currentTreeUid by remember {mutableStateOf(0)}
+
     /* topbar actions */
     var showAddVisitButton by remember { mutableStateOf(false) }
     var showAddTreeButton by remember { mutableStateOf(false) }
+    var showAddFruitButton by remember { mutableStateOf(false) }
     var showProfileButton by remember { mutableStateOf(false) }
     var showLogoutButton by remember { mutableStateOf(false) }
 
@@ -165,12 +170,10 @@ fun Navigator(
             )
         }
     }
-    val navigateToAddFruitByTree = fun(tree: Tree?) {
-        tree?.uid?.let {
-            navController.navigate(
-                AddFruitByTreeRoute(it)
+    val navigateToAddFruitByTreeUid = fun(treeUid: Int) {
+        navController.navigate(
+                AddFruitByTreeRoute(treeUid)
             )
-        }
     }
 
     val navigateToFruitDisplay = fun(fruit: Fruit?) {
@@ -313,36 +316,60 @@ fun Navigator(
                     // Only add the button if the state allows it
                     val currentNavDestination =
                         navController.currentBackStackEntryAsState().value?.destination
+
                     currentNavDestination?.let {
                         if (it.hasRoute<HomeRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = false
+                            showAddFruitButton = false
                             showLogoutButton = false
                         } else if (it.hasRoute<SearchVisitsRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = true
                             showAddTreeButton = false
+                            showAddFruitButton = false
                             showLogoutButton = false
                         } else if (it.hasRoute<SearchTreesRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = true
+                            showAddFruitButton = false
                             showLogoutButton = false
                         } else if (it.hasRoute<AddVisitRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = false
+                            showAddFruitButton = false
+                            showLogoutButton = false
+                        } else if (it.hasRoute<ShowVisitRoute>()) {
+                            showProfileButton = true
+                            showAddVisitButton = false
+                            showAddTreeButton = false
+                            showAddFruitButton = false
+                            showLogoutButton = false
+                        } else if (it.hasRoute<ShowTreeRoute>()) {
+                            showProfileButton = true
+                            showAddVisitButton = false
+                            showAddTreeButton = false
+                            showAddFruitButton = true
                             showLogoutButton = false
                         } else if (it.hasRoute<ProfileRoute>()) {
                             showProfileButton = false
                             showAddVisitButton = false
                             showAddTreeButton = false
+                            showAddFruitButton = false
                             showLogoutButton = true
                         }
 
                     }
 
+                    val backStackEntry by navController.currentBackStackEntryAsState()
+                    when {
+                        backStackEntry?.destination?.hasRoute<ShowTreeRoute>() == true -> {
+                            currentTreeUid = backStackEntry!!.toRoute<ShowTreeRoute>().uid
+                        }
+                    }
                     if (showAddVisitButton) {
                         IconButton(
                             modifier = Modifier
@@ -360,9 +387,25 @@ fun Navigator(
                         IconButton(
                             modifier = Modifier
                                 .semantics { contentDescription = "navigateToAddTree" },
-                            onClick = {
-                                navigateToAddTree()
-                            }) {
+                            onClick = { navigateToAddTree() }
+                        ){
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "AddTreeButton"
+                            )
+                        }
+                    }
+                    if (showAddFruitButton) {
+
+                        IconButton(
+                            modifier = Modifier
+                                .semantics { contentDescription = "navigateToAddFruitTree" },
+                            onClick =
+                                {
+                                    navigateToAddFruitByTreeUid(currentTreeUid)
+                                }
+                         )
+                             {
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "AddTreeButton"
@@ -480,7 +523,7 @@ fun Navigator(
                 AddVisitScreen(
                     changeMessage = changeMessage,
                     networkService = networkService,
-                    insertVisit = insertVisit
+                    navigateBack = navigateBack
                 )
             }
             // ADD TREE
@@ -532,13 +575,8 @@ fun Navigator(
                 val tree: ShowTreeRoute = backStackEntry.toRoute()
                 ShowTreeScreen(
                     uid = tree.uid,
-                    getTreeByUid = getTreeByUid,
-                    deleteTree = deleteTree,
                     changeMessage = changeMessage,
-                    navigateToEditTree = navigateToEditTree,
-                    navigateBack = navigateBack,
-                    navigateToSearchFruitsByTree = navigateToSearchFruitsByTree,
-                    navigateToAddFruitByTree = navigateToAddFruitByTree
+                    networkService = networkService
                 )
             }
             // EDIT TREE
@@ -552,22 +590,24 @@ fun Navigator(
                 )
             }
             // SEARCH FRUITS BY TREE
-            composable<SearchFruitsByTreeRoute> { backStackEntry ->
-                val tree: SearchFruitsByTreeRoute = backStackEntry.toRoute()
-                SearchFruitsByTreeScreen(
-                    uidTree = tree.uid,
-                    changeMessage = changeMessage,
-                    getFruitsByTreeUid = getFruitsByTreeUid,
-                    navigateToFruitDisplay = navigateToFruitDisplay
-                )
-            }
+            //composable<SearchFruitsByTreeRoute> { backStackEntry ->
+            //    val tree: SearchFruitsByTreeRoute = backStackEntry.toRoute()
+            //    SearchFruitsByTreeScreen(
+            //        uidTree = tree.uid,
+            //        changeMessage = changeMessage,
+            //        getFruitsByTreeUid = getFruitsByTreeUid,
+            //        navigateToFruitDisplay = navigateToFruitDisplay
+            //    )
+            //}
             // ADD FRUIT BY TREE
             composable<AddFruitByTreeRoute> { backStackEntry ->
                 val tree: AddFruitByTreeRoute = backStackEntry.toRoute()
+
                 AddFruitByTreeScreen(
-                    uidTree = tree.uid,
+                    treeUid = tree.uid,
                     changeMessage = changeMessage,
-                    insertFruitByTree = insertFruitByTree
+                    networkService = networkService,
+                    navigateBack = navigateBack
                 )
             }
             // SHOW Tree

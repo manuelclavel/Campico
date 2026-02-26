@@ -304,48 +304,6 @@ fun compressImageToLessThan1MB(imageBytes: ByteArray, maxFileSize: Long = 102400
                         )
 
                     }
-                    /* delete */
-                    Button(
-                        modifier = Modifier.semantics { contentDescription = "Delete" },
-                        onClick = {
-                            changeMessage("Work in progress")
-                            /*
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                try {
-                                    val result = networkService.deleteVisit(
-                                        payload = DeleteVisitRequest(
-                                            token = token,
-                                            email = email,
-                                            uid = uid
-                                        )
-                                    )
-                                    code = result.code
-                                    message = result.message
-                                    changeMessage(message)
-                                    Log.d("CAMPICO", message)
-
-                                    } catch (e: Exception) {
-                                    message = "There was an error in the request."
-                                    Log.d("CAMPICO", "Unexpected exception: $e")
-                                }
-                            }
-                            if (code == 200) {
-                                // edit the preferences and save email
-                                changeMessage(message)
-                                navigateBack()
-                            } else {
-                                changeMessage(message)
-                            }
-
-                        }
-                        */
-
-                        })
-                    {
-                        Icon(Icons.Default.Delete, contentDescription = "DeleteVisit")
-                        //Text("Delete")
-                    }
 
 
                 }

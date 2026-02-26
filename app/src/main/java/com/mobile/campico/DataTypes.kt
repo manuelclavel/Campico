@@ -25,6 +25,8 @@ data class GetTreesRequest (val token: String, val email: String, val query: Str
 @Serializable
 data class GetVisitsRequest (val token: String, val email:String, val query: String = "getVisits")
 
+@Serializable
+data class AddFruitRequest(val token: String, val email: String, val query: String = "addFruit", val id: String, val treeUid: Int)
 
 @Serializable
 data class AddVisitRequest (val token: String, val email:String, val query: String = "addVisit", val date:String)
@@ -42,6 +44,14 @@ data class GetImagesVisitByVisitUidRequest(
     val visitUid: Int,
     val mediaType: Int
 )
+
+@Serializable
+data class GetTreeByUidRequest(val token: String, val email:String, val query: String = "getTreeByUid", val uid:Int)
+@Serializable
+data class GetFruitsByTreeUidRequest( val token: String,
+                                      val email: String,
+                                      val query: String = "getFruitsByTreeUid",
+                                      val treeUid: Int)
 @Serializable
 data class GetTotalFruitsByTreeUidRequest(
     val token: String,

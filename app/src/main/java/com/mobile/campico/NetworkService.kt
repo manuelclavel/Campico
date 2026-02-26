@@ -8,7 +8,6 @@ import retrofit2.http.PUT
 import retrofit2.http.Url
 
 
-
 interface NetworkService {
 
     @GET
@@ -27,7 +26,6 @@ interface NetworkService {
     ): SimpleResponse
 
 
-
     @PUT
     suspend fun uploadMediaVisitObject(
         // CampicoLambdaUploadObjectOrchestrator
@@ -38,48 +36,67 @@ interface NetworkService {
 
     @PUT
     suspend fun getTrees(
-        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetTreesRequest
     ): SimpleResponse
 
     @PUT
     suspend fun getVisits(
-        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetVisitsRequest
     ): SimpleResponse
 
     @PUT
     suspend fun addVisit(
-        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: AddVisitRequest
     ): SimpleResponse
 
     @PUT
+    suspend fun addFruit(
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: AddFruitRequest
+    ): SimpleResponse
+
+    @PUT
     suspend fun deleteVisit(
-        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: DeleteVisitRequest
     ): SimpleResponse
+
     @PUT
     suspend fun getVisitByUid(
-        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetVisitByUidRequest
     ): SimpleResponse
 
     @PUT
     suspend fun getImagesVisitByVisitUid(
-        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetImagesVisitByVisitUidRequest
     ): SimpleResponse
 
     @PUT
+    suspend fun getTreeByUid(
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: GetTreeByUidRequest
+    ): SimpleResponse
+
+    @PUT
     suspend fun getTotalFruitsByTreeUid(
-        @Url url:String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetTotalFruitsByTreeUidRequest
     ): SimpleResponse
 
     @PUT
+    suspend fun getFruitsByTreeUid(
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: GetFruitsByTreeUidRequest
+    ): SimpleResponse
+
+    @PUT
     suspend fun getMediaObjectByKey(
-        @Url url:String = "https://wwsynfkf6lzk6ezzjqvs27wdj40vbelj.lambda-url.ap-southeast-1.on.aws/",
+        @Url url: String = "https://wwsynfkf6lzk6ezzjqvs27wdj40vbelj.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetMediaObjectByKeyRequest
     ): SimpleResponse
 

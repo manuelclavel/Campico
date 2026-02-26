@@ -3,6 +3,7 @@ package com.mobile.campico
 
 import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -44,7 +46,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
-fun convertDateToStringDate(date: Date?): String{
+fun convertDateToStringDate(date: Date?): String {
     // 1. Convert the java.util.Date to an Instant (a point on the time-line in UTC)
     val instant = date?.toInstant()
     // 2. Apply a time zone to the Instant to get a ZonedDateTime
@@ -52,12 +54,13 @@ fun convertDateToStringDate(date: Date?): String{
     val zonedDateTime = instant?.atZone(ZoneId.systemDefault())
 
     // 3. Extract the LocalDate from the ZonedDateTime
-    val localDate =  zonedDateTime?.toLocalDate()
+    val localDate = zonedDateTime?.toLocalDate()
     // Define the desired format pattern
     val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     // Format the date object into a string
     return localDate?.format(formatter).orEmpty()
 }
+
 fun convertMillisToDate(millis: Long): String {
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     return formatter.format(Date(millis))
@@ -75,10 +78,11 @@ fun convertDateStringToDate(dateString: String): Date {
     // Convert Instant to java.util.Date
     return Date.from(instant)
 }
+
 @Composable
 fun AddVisitScreen(
     changeMessage: (String) -> Unit,
-    insertVisit: suspend (Visit) -> Unit,
+    navigateBack : () -> Unit,
     networkService: NetworkService
 ) {
 
@@ -90,8 +94,8 @@ fun AddVisitScreen(
     var message by remember { mutableStateOf("") }
 
 
-    var token:String by remember {mutableStateOf("")}
-    var email:String by remember {mutableStateOf("")}
+    var token: String by remember { mutableStateOf("") }
+    var email: String by remember { mutableStateOf("") }
 
 
     var selectedDateText by remember { mutableStateOf("") }
@@ -106,9 +110,12 @@ fun AddVisitScreen(
         changeMessage("Please, add a visit.")
     }
 
-    Column() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         Spacer(
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(8.dp)
         )
         OutlinedTextField(
             value = selectedDateText,
@@ -123,7 +130,9 @@ fun AddVisitScreen(
             modifier = Modifier.fillMaxWidth()
         )
         Button(
-            modifier = Modifier.semantics { contentDescription = "Add" },
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "Add" },
             onClick = {
 
                 scope.launch {
@@ -164,6 +173,7 @@ fun AddVisitScreen(
                     if (code == 200) {
                         // edit the preferences and save email
                         changeMessage(message)
+                        navigateBack()
                     } else {
                         changeMessage(message)
                     }
@@ -183,7 +193,8 @@ fun AddVisitScreen(
                             // Convert the selected milliseconds to a readable date format
                             val selectedDateMillis = datePickerState.selectedDateMillis
                             if (selectedDateMillis != null) {
-                                selectedDateText = convertMillisToDate(selectedDateMillis) // Helper function needed
+                                selectedDateText =
+                                    convertMillisToDate(selectedDateMillis) // Helper function needed
                             }
                             showDatePicker = false
                         }
