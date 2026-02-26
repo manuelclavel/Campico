@@ -16,6 +16,8 @@ data class TokenRoute(val email: String)
 @Serializable
 object UploadPhotoRoute
 
+@Serializable
+object ProfileRoute
 
 @Serializable
 object AddVisitRoute

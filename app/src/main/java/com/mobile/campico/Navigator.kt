@@ -4,9 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -46,12 +55,16 @@ fun Navigator(
 
     var message by remember { mutableStateOf("") }
 
+    /* topbar actions */
+    var showAddVisitButton by remember { mutableStateOf(false) }
+    var showProfileButton by remember { mutableStateOf(false) }
+    var showLogoutButton by remember { mutableStateOf(false) }
 
     val changeMessage = fun(text: String) {
         message = text
     }
 
-    val navigateBack = fun(){
+    val navigateBack = fun() {
         navController.navigateUp()
     }
 
@@ -59,45 +72,53 @@ fun Navigator(
         navController.navigate(HomeRoute)
     }
 
+    val navigateToProfile = fun() {
+        navController.navigate(ProfileRoute)
+    }
     val navigateToLogin = fun() {
         navController.navigate(LoginRoute)
     }
-    val navigateToToken = fun(email:String) {
+    val navigateToToken = fun(email: String) {
         navController.navigate(TokenRoute(email))
     }
     // begin
-    val navigateToSearchVisits : () -> Unit = {
+    val navigateToSearchVisits: () -> Unit = {
         navController.navigate(SearchVisitsRoute)
     }
-    val navigateToAddVisit : () -> Unit = {
+    val navigateToAddVisit: () -> Unit = {
         navController.navigate(AddVisitRoute)
     }
+    /*
     val navigateToEditVisit = fun(visit: Visit?) {
         visit?.uid?.let {
             navController.navigate(
-                EditVisitRoute(it))
+                EditVisitRoute(it)
+            )
         }
     }
+     */
 
     // end
 
-    val navigateToSearchTrees : () -> Unit = {
+    val navigateToSearchTrees: () -> Unit = {
         navController.navigate(SearchTreesRoute)
     }
-    val navigateToAddTree : () -> Unit = {
+    val navigateToAddTree: () -> Unit = {
         navController.navigate(AddTreeRoute)
     }
     val navigateToEditTree = fun(tree: Tree?) {
         tree?.uid?.let {
             navController.navigate(
-                EditTreeRoute(it))
+                EditTreeRoute(it)
+            )
         }
     }
 
     val navigateToVisitDisplay = fun(visit: Visit?) {
         visit?.uid?.let {
             navController.navigate(
-                ShowVisitRoute(it))
+                ShowVisitRoute(it)
+            )
         }
     }
 
@@ -107,64 +128,71 @@ fun Navigator(
     //        dao.findTreeById(id = id)
     //    }
 
-    val navigateToTreeDisplayById = fun(id:String) {
+    val navigateToTreeDisplayById = fun(id: String) {
         scope.launch {
             val tree = dao.findTreeById(id)
             tree?.uid?.let {
                 navController.navigate(
-                    ShowTreeRoute(it))
+                    ShowTreeRoute(it)
+                )
             }
         }
     }
     val navigateToTreeDisplay = fun(tree: Tree?) {
         tree?.uid?.let {
             navController.navigate(
-                ShowTreeRoute(it))
+                ShowTreeRoute(it)
+            )
         }
     }
 
-    val navigateToFruitDisplayById = fun(id:String) {
+    val navigateToFruitDisplayById = fun(id: String) {
         scope.launch {
             val fruit = dao.findFruitById(id)
             fruit?.uid?.let {
                 navController.navigate(
-                    ShowFruitRoute(it))
+                    ShowFruitRoute(it)
+                )
             }
         }
     }
 
-    val navigateToSearchFruitsByTree = fun(tree: Tree?){
+    val navigateToSearchFruitsByTree = fun(tree: Tree?) {
         tree?.uid?.let {
             navController.navigate(
-                SearchFruitsByTreeRoute(it))
+                SearchFruitsByTreeRoute(it)
+            )
         }
     }
-    val navigateToAddFruitByTree = fun(tree: Tree?){
+    val navigateToAddFruitByTree = fun(tree: Tree?) {
         tree?.uid?.let {
             navController.navigate(
-                AddFruitByTreeRoute(it))
+                AddFruitByTreeRoute(it)
+            )
         }
     }
 
     val navigateToFruitDisplay = fun(fruit: Fruit?) {
         fruit?.uid?.let {
             navController.navigate(
-                ShowFruitRoute(it))
+                ShowFruitRoute(it)
+            )
         }
     }
 
     val navigateToEditFruit = fun(fruit: Fruit?) {
         fruit?.uid?.let {
             navController.navigate(
-                EditFruitRoute(it))
+                EditFruitRoute(it)
+            )
         }
     }
 
-    val navigateToQRCodeScanner = fun(){
+    val navigateToQRCodeScanner = fun() {
         navController.navigate(QRCodeScannerRoute)
     }
 
-    val navigateToUploadPhoto = fun(){
+    val navigateToUploadPhoto = fun() {
         navController.navigate(UploadPhotoRoute)
     }
 
@@ -173,7 +201,7 @@ fun Navigator(
     //    return dao.getTrees()
     //}
     // begin
-    val getVisits : suspend () -> List<Visit> = {
+    val getVisits: suspend () -> List<Visit> = {
         dao.getVisits()
     }
 
@@ -191,14 +219,15 @@ fun Navigator(
     }
 
     val updateVisit: suspend (Date, Date) -> Unit =
-        { dateOld, dateNew->
+        { dateOld, dateNew ->
             dao.updateVisit(
                 dateOld = dateOld,
-                dateNew = dateNew)
+                dateNew = dateNew
+            )
         }
 
     // end
-    val getTrees : suspend () -> List<Tree> = {
+    val getTrees: suspend () -> List<Tree> = {
         dao.getTrees()
     }
 
@@ -216,15 +245,16 @@ fun Navigator(
     }
 
     val updateTree: suspend (String, String) -> Unit =
-        { idOld, idNew->
+        { idOld, idNew ->
             dao.updateTree(
                 idOld = idOld,
-                idNew = idNew)
+                idNew = idNew
+            )
         }
 
     val getFruitsByTreeUid: suspend (Int) -> List<Fruit> = { uidTree ->
-    dao.getFruitsByTreeUid(uidTree = uidTree)
-}
+        dao.getFruitsByTreeUid(uidTree = uidTree)
+    }
     val getTotalFruitsByTreeUid: suspend (Int) -> Int = { uidTree ->
         dao.getTotalFruitsByTreeUid(uidTree = uidTree)
     }
@@ -243,10 +273,11 @@ fun Navigator(
     }
 
     val updateFruit: suspend (String, String) -> Unit =
-        { idOld, idNew->
+        { idOld, idNew ->
             dao.updateFruit(
                 idOld = idOld,
-                idNew = idNew)
+                idNew = idNew
+            )
         }
 
 
@@ -267,25 +298,88 @@ fun Navigator(
                 navigationIcon = {
                     val currentRouteIsHome =
                         navController.currentBackStackEntryAsState().value?.destination?.hasRoute<HomeRoute>()
-                    //val currentRouteIsQRCodeScan =
-                    //    navController.currentBackStackEntryAsState().value?.destination?.hasRoute<QRCodeScannerRoute>()
-                    //val currentDestination =
-                    //    navController.currentBackStackEntryAsState().value?.destination?.toString().orEmpty()
                     if (currentRouteIsHome == false) {
                         Button(
                             modifier = Modifier.semantics { contentDescription = "navigateBack" },
                             onClick = {
-                                //if (currentRouteIsQRCodeScan == true){
-                                //    navigateToHome()
-                                //} else {
-                                //    val currentDestination =
-                                 //   Log.d("CAMPICO", currentDestination )
-                                    navController.navigateUp()
-                                //}
+                                navController.navigateUp()
                             }) {
                             Text("Back")
                         }
                     }
+                },
+                actions = {
+                    // Only add the button if the state allows it
+                    val currentNavDestination =
+                        navController.currentBackStackEntryAsState().value?.destination
+                    currentNavDestination?.let {
+                        if (it.hasRoute<HomeRoute>()) {
+                            showProfileButton = true
+                            showAddVisitButton = false
+                            showLogoutButton = false
+                        } else if (it.hasRoute<SearchVisitsRoute>()) {
+                            showProfileButton = true
+                            showAddVisitButton = true
+                            showLogoutButton = false
+                        } else if (it.hasRoute<AddVisitRoute>()) {
+                            showProfileButton = true
+                            showAddVisitButton = false
+                            showLogoutButton = false
+                        } else if (it.hasRoute<ProfileRoute>()) {
+                            showProfileButton = false
+                            showAddVisitButton = false
+                            showLogoutButton = true
+                        }
+
+                    }
+
+                    if (showAddVisitButton) {
+                        IconButton(
+                            modifier = Modifier
+                                .semantics { contentDescription = "navigateToAddVisit" },
+                            onClick = {
+                                navigateToAddVisit()
+                            }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "AddVisitButton"
+                            )
+                        }
+                    }
+                    if (showProfileButton) {
+                        IconButton(
+                            modifier = Modifier
+                                .semantics { contentDescription = "navigateToProfile" },
+                            onClick = {
+                                navigateToProfile()
+                            }) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "ProfileButton"
+                            )
+                        }
+                    }
+                    if (showLogoutButton) {
+                        IconButton(
+                            modifier = Modifier
+                                .semantics { contentDescription = "LogoutButton" },
+                            onClick = {
+                                scope.launch {
+                                    appContext.dataStore.edit { preferences ->
+                                        preferences.remove(EMAIL)
+                                        preferences.remove(TOKEN)
+                                        changeMessage(preferences[EMAIL] ?: "")
+                                    }
+                                    navigateBack()
+                                }
+                            }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = "ProfileButton"
+                            )
+                        }
+                    }
+
 
                 }
             )
@@ -306,9 +400,9 @@ fun Navigator(
         }
     ) { innerPadding ->
         NavHost(
-               modifier = Modifier
-                   .padding(innerPadding)
-                   .fillMaxWidth(),
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxWidth(),
             navController = navController,
             startDestination = HomeRoute
         ) {
@@ -321,19 +415,24 @@ fun Navigator(
                     navigateToLogin = navigateToLogin,
                     networkService = networkService,
                     navigateToQRCodeScanner = navigateToQRCodeScanner,
-                    navigateToSearchVisits = navigateToSearchVisits,
-                    navigateToAddVisit = navigateToAddVisit,
-                    navigateToUploadPhoto = navigateToUploadPhoto
+                    navigateToSearchVisits = navigateToSearchVisits
                 )
             }
             // TOKEN
-            composable<TokenRoute> {
-                    backStackEntry ->
-                val tokenRoute : TokenRoute = backStackEntry.toRoute()
+            composable<TokenRoute> { backStackEntry ->
+                val tokenRoute: TokenRoute = backStackEntry.toRoute()
                 TokenScreen(
-                    changeMessage = changeMessage ,
+                    changeMessage = changeMessage,
                     navigateToHome = navigateToHome,
                     email = tokenRoute.email
+                )
+            }
+            // PROFILE
+            // LOGIN
+            composable<ProfileRoute> {
+                ProfileScreen(
+                    changeMessage = changeMessage,
+                    navigateToLogin = navigateToLogin,
                 )
             }
             // LOGIN
@@ -349,7 +448,8 @@ fun Navigator(
                 SearchVisitsScreen(
                     changeMessage = changeMessage,
                     networkService = networkService,
-                    navigateToVisitDisplay = navigateToVisitDisplay
+                    navigateToVisitDisplay = navigateToVisitDisplay,
+                    navigateToAddVisit = navigateToAddVisit
                 )
             }
             // ADD VISIT
@@ -368,27 +468,26 @@ fun Navigator(
                 )
             }
             // SHOW VISIT
-           composable<ShowVisitRoute>{
-                    backStackEntry ->
-                val visit : ShowVisitRoute = backStackEntry.toRoute()
+            composable<ShowVisitRoute> { backStackEntry ->
+                val visit: ShowVisitRoute = backStackEntry.toRoute()
                 ShowVisitScreen(
                     uid = visit.uid,
                     networkService = networkService,
                     changeMessage = changeMessage,
                     navigateBack = navigateBack,
                 )
-           }
+            }
             // EDIT VISIT
-          //  composable<EditVisitRoute>{
-          //          backStackEntry ->
-          //      val visit : EditVisitRoute = backStackEntry.toRoute()
-          //      EditVisitScreen(
-          //          uid = visit.uid,
-          //          getVisitByUid = getVisitByUid,
-          //          updateVisit = updateVisit,
-          //          changeMessage = changeMessage
-           //     )
-           // }
+            //  composable<EditVisitRoute>{
+            //          backStackEntry ->
+            //      val visit : EditVisitRoute = backStackEntry.toRoute()
+            //      EditVisitScreen(
+            //          uid = visit.uid,
+            //          getVisitByUid = getVisitByUid,
+            //          updateVisit = updateVisit,
+            //          changeMessage = changeMessage
+            //     )
+            // }
             // SEARCH TREES
             composable<SearchTreesRoute> {
                 SearchTreesScreen(
@@ -406,9 +505,8 @@ fun Navigator(
                 )
             }
             // SHOW Tree
-            composable<ShowTreeRoute>{
-                    backStackEntry ->
-                val tree : ShowTreeRoute = backStackEntry.toRoute()
+            composable<ShowTreeRoute> { backStackEntry ->
+                val tree: ShowTreeRoute = backStackEntry.toRoute()
                 ShowTreeScreen(
                     uid = tree.uid,
                     getTreeByUid = getTreeByUid,
@@ -421,9 +519,8 @@ fun Navigator(
                 )
             }
             // EDIT TREE
-            composable<EditTreeRoute>{
-                    backStackEntry ->
-                val tree : EditTreeRoute = backStackEntry.toRoute()
+            composable<EditTreeRoute> { backStackEntry ->
+                val tree: EditTreeRoute = backStackEntry.toRoute()
                 EditTreeScreen(
                     uid = tree.uid,
                     getTreeByUid = getTreeByUid,
@@ -432,9 +529,8 @@ fun Navigator(
                 )
             }
             // SEARCH FRUITS BY TREE
-            composable<SearchFruitsByTreeRoute>{
-                    backStackEntry ->
-                val tree : SearchFruitsByTreeRoute = backStackEntry.toRoute()
+            composable<SearchFruitsByTreeRoute> { backStackEntry ->
+                val tree: SearchFruitsByTreeRoute = backStackEntry.toRoute()
                 SearchFruitsByTreeScreen(
                     uidTree = tree.uid,
                     changeMessage = changeMessage,
@@ -443,9 +539,8 @@ fun Navigator(
                 )
             }
             // ADD FRUIT BY TREE
-            composable<AddFruitByTreeRoute>{
-                    backStackEntry ->
-                val tree : AddFruitByTreeRoute = backStackEntry.toRoute()
+            composable<AddFruitByTreeRoute> { backStackEntry ->
+                val tree: AddFruitByTreeRoute = backStackEntry.toRoute()
                 AddFruitByTreeScreen(
                     uidTree = tree.uid,
                     changeMessage = changeMessage,
@@ -453,9 +548,8 @@ fun Navigator(
                 )
             }
             // SHOW Tree
-            composable<ShowFruitRoute>{
-                    backStackEntry ->
-                val fruit : ShowFruitRoute = backStackEntry.toRoute()
+            composable<ShowFruitRoute> { backStackEntry ->
+                val fruit: ShowFruitRoute = backStackEntry.toRoute()
                 ShowFruitScreen(
                     uid = fruit.uid,
                     getFruitByUid = getFruitByUid,
@@ -466,9 +560,8 @@ fun Navigator(
                 )
             }
             // EDIT FRUIT
-            composable<EditFruitRoute>{
-                    backStackEntry ->
-                val fruit : EditFruitRoute = backStackEntry.toRoute()
+            composable<EditFruitRoute> { backStackEntry ->
+                val fruit: EditFruitRoute = backStackEntry.toRoute()
                 EditFruitScreen(
                     uid = fruit.uid,
                     getFruitByUid = getFruitByUid,
@@ -477,7 +570,7 @@ fun Navigator(
                 )
             }
             // SCANNER
-            composable<QRCodeScannerRoute>{
+            composable<QRCodeScannerRoute> {
                 QRCodeScannerScreen(
                     navigateToTreeDisplayById = navigateToTreeDisplayById,
                     navigateToFruitDisplayById = navigateToFruitDisplayById

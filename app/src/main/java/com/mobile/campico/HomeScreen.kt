@@ -28,13 +28,12 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     changeMessage: (String) -> Unit,
     navigateToSearchVisits: () -> Unit,
-    navigateToAddVisit: () -> Unit,
     navigateToSearchTrees: () -> Unit,
     navigateToAddTree: () -> Unit,
     navigateToLogin: () -> Unit,
     networkService: NetworkService,
     navigateToQRCodeScanner: () -> Unit,
-    navigateToUploadPhoto: () -> Unit
+    //navigateToUploadPhoto: () -> Unit
 ) {
 
     val context = LocalContext.current
@@ -75,7 +74,7 @@ fun HomeScreen(
     ) {
         // begin
         Spacer(
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(8.dp)
         )
         Button(
             modifier = Modifier
@@ -86,22 +85,13 @@ fun HomeScreen(
             })
         {
             Text(
-                "Search Visits",
+                "Visits",
                 modifier = Modifier
                     .semantics { contentDescription = "SearchVisits" },
             )
         }
 
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = "navigateToAddVisit" },
-            onClick = {
-                navigateToAddVisit()
-            }) {
-            Text("Add Visit", modifier = Modifier.semantics { contentDescription = "AddVisit" })
-        }
-
+        /*
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -114,8 +104,8 @@ fun HomeScreen(
                 modifier = Modifier.semantics { contentDescription = "UploadPhotoButton" }
             )
         }
+*/
 
-        // end
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,7 +115,7 @@ fun HomeScreen(
             })
         {
             Text(
-                "Search Trees",
+                "Trees",
                 modifier = Modifier
                     .semantics { contentDescription = "SearchTrees" },
             )
@@ -143,8 +133,8 @@ fun HomeScreen(
 
         Button(
             modifier = Modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "navigateToQRCodeScanner" },
+                .fillMaxWidth()
+                .semantics { contentDescription = "navigateToQRCodeScanner" },
             onClick = {
                 navigateToQRCodeScanner()
             }) {
@@ -171,38 +161,6 @@ fun HomeScreen(
         }
 
 
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = "navigateToLogin" }, onClick = {
-
-                navigateToLogin()
-
-            }) {
-            Text(
-                "Log in",
-                modifier = Modifier.semantics { contentDescription = "Login" }
-            )
-        }
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = "ExecuteLogout" }, onClick = {
-
-                scope.launch {
-                    appContext.dataStore.edit { preferences ->
-                        preferences.remove(EMAIL)
-                        preferences.remove(TOKEN)
-                        changeMessage(preferences[EMAIL] ?: "")
-                    }
-                }
-
-            }) {
-            Text(
-                "Log out",
-                modifier = Modifier.semantics { contentDescription = "Logout" }
-            )
-        }
     }
 }
 
