@@ -48,6 +48,8 @@ data class GetImagesVisitByVisitUidRequest(
 @Serializable
 data class GetTreeByUidRequest(val token: String, val email:String, val query: String = "getTreeByUid", val uid:Int)
 @Serializable
+data class GetFruitByUidRequest(val token: String, val email: String, val query: String = "getFruitByUid", val uid:Int)
+@Serializable
 data class GetFruitsByTreeUidRequest( val token: String,
                                       val email: String,
                                       val query: String = "getFruitsByTreeUid",

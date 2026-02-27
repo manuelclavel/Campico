@@ -354,6 +354,12 @@ fun Navigator(
                             showAddTreeButton = false
                             showAddFruitButton = true
                             showLogoutButton = false
+                        } else if (it.hasRoute<ShowFruitRoute>()) {
+                            showProfileButton = true
+                            showAddVisitButton = false
+                            showAddTreeButton = false
+                            showAddFruitButton = false
+                            showLogoutButton = false
                         } else if (it.hasRoute<ProfileRoute>()) {
                             showProfileButton = false
                             showAddVisitButton = false
@@ -576,7 +582,8 @@ fun Navigator(
                 ShowTreeScreen(
                     uid = tree.uid,
                     changeMessage = changeMessage,
-                    networkService = networkService
+                    networkService = networkService,
+                    navigateToFruitDisplay = navigateToFruitDisplay
                 )
             }
             // EDIT TREE
@@ -610,16 +617,17 @@ fun Navigator(
                     navigateBack = navigateBack
                 )
             }
-            // SHOW Tree
+            // SHOW FRUIT
             composable<ShowFruitRoute> { backStackEntry ->
                 val fruit: ShowFruitRoute = backStackEntry.toRoute()
                 ShowFruitScreen(
                     uid = fruit.uid,
-                    getFruitByUid = getFruitByUid,
-                    deleteFruit = deleteFruit,
+                    //getFruitByUid = getFruitByUid,
+                    //deleteFruit = deleteFruit,
                     changeMessage = changeMessage,
-                    navigateToEditFruit = navigateToEditFruit,
-                    navigateBack = navigateBack
+                    networkService = networkService,
+                    //navigateToEditFruit = navigateToEditFruit,
+                    //navigateBack = navigateBack
                 )
             }
             // EDIT FRUIT

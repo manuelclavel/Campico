@@ -83,6 +83,11 @@ interface NetworkService {
     ): SimpleResponse
 
     @PUT
+    suspend fun getFruitByUid(
+        @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
+        @Body payload: GetFruitByUidRequest
+    ): SimpleResponse
+    @PUT
     suspend fun getTotalFruitsByTreeUid(
         @Url url: String = "https://3ajixssromdj2oqx4kpnbdvmxu0bndyu.lambda-url.ap-southeast-1.on.aws/",
         @Body payload: GetTotalFruitsByTreeUidRequest

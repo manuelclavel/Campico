@@ -48,7 +48,8 @@ fun jsonArrayStringToTree(jsonString: String): Tree {
 fun ShowTreeScreen(
     uid: Int,
     changeMessage: (String) -> Unit,
-    networkService: NetworkService
+    networkService: NetworkService,
+    navigateToFruitDisplay: (Fruit) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -98,10 +99,9 @@ fun ShowTreeScreen(
     if (tree == null) {
         changeMessage("Tree not found")
     } else {
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Spacer(
                 modifier = Modifier.size(8.dp)
@@ -116,36 +116,24 @@ fun ShowTreeScreen(
                     readOnly = true,
                     value = tree?.id.orEmpty(),
                     onValueChange = { },
-                    modifier = Modifier.semantics { contentDescription = "idField" },
+                    modifier = Modifier
+                        .weight(1f) // Takes up remaining space
+                        .padding(end = 8.dp)
+                        .semantics { contentDescription = "idField" },
                     label = { Text("id") }
                 )
-                /* add a fruit */
-                /*
-                 Button(onClick = {
-                     tree?.let {
-                         navigateToAddFruitByTree(tree)
-                     }
-                 }) {
-
-                     Icon(
-                         imageVector = Icons.Default.Add,
-                         contentDescription = "Add a fruit"
-                     )
-
-
-                 */
             }
-            tree?.let {
-                SearchFruitsByTreeList(
-                    tree = it,
-                    changeMessage = changeMessage,
-                    networkService = networkService
-                )
+                tree?.let {
+                    SearchFruitsByTreeUidList(
+                        treeUid = it.uid,
+                        changeMessage = changeMessage,
+                        networkService = networkService,
+                        navigateToFruitDisplay = navigateToFruitDisplay
+                    )
+                }
+
             }
-
-        }
-
-
+        //}
 
 
         /*
