@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -30,7 +29,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun MediaImageHorizontalPager(
     mediaVisits: List<MediaVisit>,
-    networkService: NetworkService
+    networkService: NetworkService,
+    changeMessage: (String) -> Unit
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
@@ -56,6 +56,7 @@ fun MediaImageHorizontalPager(
         // a pre-compute bitmaps array is key for forcing the horizontal pager to
         // recompose (but other options may be available)
         bitmaps.clear()
+
         Log.d("CAMPICO", "Building the images for " + mediaVisits.size)
         mediaVisits.forEachIndexed { index, mediaVisit ->
             val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
@@ -109,10 +110,21 @@ fun MediaImageHorizontalPager(
                     }
                 }
             }
+
         }
+
+
         // The coroutineScope function ---in this case the LaunchedEffect---
         // will suspend until all launched children are complete
         // This means, in particular, until all images have been downloaded
+    }
+
+    //if (mediaVisits.isNotEmpty()) {
+        if (bitmaps.size == mediaVisits.size) {
+            changeMessage(email)
+      //  } else {
+      //      changeMessage("Loading images...")
+      //  }
     }
 
     HorizontalPager(
@@ -129,4 +141,5 @@ fun MediaImageHorizontalPager(
             )
         }
     }
+
 }

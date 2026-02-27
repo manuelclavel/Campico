@@ -1,5 +1,11 @@
 package com.mobile.campico
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +38,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.scale
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -37,10 +47,47 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.util.Date
+import kotlin.io.encoding.Base64
 
+fun compressImageToLessThan1MB(imageBytes: ByteArray, maxFileSize: Long = 1024000): ByteArray {
+    // 1. Decode the original ByteArray into a Bitmap
+    var bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
+    // 2. Initialize variables for compression
+    var quality = 90 // Start with a decent quality
+    val outputStream = ByteArrayOutputStream()
+
+    // 3. Compress the bitmap to the output stream
+    bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+    var compressedData = outputStream.toByteArray()
+
+    // 4. Iterate to reduce quality or rescale until the size is under the limit
+    while (compressedData.size > maxFileSize) {
+        outputStream.reset() // Reset the output stream for a new compression attempt
+        quality -= 5 // Decrease quality by 5 for the next iteration
+
+        if (quality < 10) {
+            // If quality is too low, rescale the image to fewer pixels
+            bitmap = bitmap.scale((bitmap.width * 0.8).toInt(), (bitmap.height * 0.8).toInt())
+            quality = 90 // Reset quality for the smaller bitmap
+        }
+
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+        compressedData = outputStream.toByteArray()
+    }
+
+    // 5. Recycle the bitmap to free memory
+    bitmap.recycle()
+
+    return compressedData
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,22 +100,103 @@ fun Navigator(
     val appContext = context.applicationContext
     val scope = rememberCoroutineScope()
 
+    //var code by remember { mutableIntStateOf(0) }
+    //var message by remember { mutableStateOf("") }
+
+    var token:String by remember {mutableStateOf("")}
+    var email:String by remember {mutableStateOf("")}
+
+
     var message by remember { mutableStateOf("") }
+    val changeMessage = fun(text: String) {
+        message = text
+    }
 
+    LaunchedEffect(Unit) {
+        val preferencesFlow: Flow<Preferences> = appContext.dataStore.data
+        val preferences = preferencesFlow.first()
+        token = preferences[TOKEN] ?: ""
+        email = preferences[EMAIL] ?: ""
+    }
     /* topbar selections */
-
+    var currentVisitUid by remember {mutableStateOf(0)}
     var currentTreeUid by remember {mutableStateOf(0)}
 
+    /* refresh */
+    var refreshImagePagerVisit by remember {mutableStateOf(false)}
+    val getRefreshImagePagerVisit = fun(): Boolean {
+        return refreshImagePagerVisit
+    }
+
+    /* camera */
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                Log.d("CAMPICO", "successfully capturing image")
+                 // Photo captured successfully, imageUri now points to the file
+                 // You can initiate the upload here
+                 scope.launch {
+                     withContext(Dispatchers.IO) {
+                         changeMessage("Uploading object in S3...")
+                         imageUri?.let { uri ->
+                             val byteArray: ByteArray
+                             // Use the 'use' extension function to ensure
+                             // the InputStream is automatically closed
+                             context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                                 byteArray = inputStream.readBytes()
+
+                                 /* reduce size */
+                                 val compressedByteArray = compressImageToLessThan1MB(
+                                     imageBytes = byteArray
+                                 )
+                                 /* end */
+                                 val encodedString = Base64.encode(compressedByteArray)
+                                 // generating a unique key
+                                 val timestampMillis: Long = System.currentTimeMillis()
+                                 val key = "timestamp:$timestampMillis"
+
+                                 // generating a base64 key
+                                 val keyAsByteArray = key.toByteArray(Charsets.UTF_8)
+                                 val s3key: String = Base64.Default.encode(keyAsByteArray)
+
+                                 val response =
+                                     networkService.uploadMediaVisitObject(
+                                         upload = UploadMediaVisitRequest(
+                                             content = encodedString,
+                                             token = token,
+                                             email = email,
+                                             s3key = s3key,
+                                             mediaType = 0,
+                                             visitUid = currentVisitUid
+                                         )
+                                     )
+                                 //changeMessage(response.toString())
+                                 refreshImagePagerVisit = !(refreshImagePagerVisit)
+                             }
+                         }
+
+                     }
+                 }
+            }
+        }
+    )
+    val takePictureVisit = fun (uid:Int){
+        val uri = getTmpFileUri(context)
+        imageUri = uri
+        cameraLauncher.launch(uri)
+    }
+
+
     /* topbar actions */
+    var showTakePictureVisitButton by remember { mutableStateOf(false) }
     var showAddVisitButton by remember { mutableStateOf(false) }
     var showAddTreeButton by remember { mutableStateOf(false) }
     var showAddFruitButton by remember { mutableStateOf(false) }
     var showProfileButton by remember { mutableStateOf(false) }
     var showLogoutButton by remember { mutableStateOf(false) }
 
-    val changeMessage = fun(text: String) {
-        message = text
-    }
 
     val navigateBack = fun() {
         navController.navigateUp()
@@ -324,54 +452,65 @@ fun Navigator(
                             showAddTreeButton = false
                             showAddFruitButton = false
                             showLogoutButton = false
+                            showTakePictureVisitButton = false
                         } else if (it.hasRoute<SearchVisitsRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = true
                             showAddTreeButton = false
                             showAddFruitButton = false
                             showLogoutButton = false
+                            showTakePictureVisitButton = false
                         } else if (it.hasRoute<SearchTreesRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = true
                             showAddFruitButton = false
                             showLogoutButton = false
+                            showTakePictureVisitButton = false
                         } else if (it.hasRoute<AddVisitRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = false
                             showAddFruitButton = false
                             showLogoutButton = false
+                            showTakePictureVisitButton = false
                         } else if (it.hasRoute<ShowVisitRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = false
                             showAddFruitButton = false
                             showLogoutButton = false
+                            showTakePictureVisitButton = true
                         } else if (it.hasRoute<ShowTreeRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = false
                             showAddFruitButton = true
                             showLogoutButton = false
+                            showTakePictureVisitButton = false
                         } else if (it.hasRoute<ShowFruitRoute>()) {
                             showProfileButton = true
                             showAddVisitButton = false
                             showAddTreeButton = false
                             showAddFruitButton = false
                             showLogoutButton = false
+                            showTakePictureVisitButton = false
                         } else if (it.hasRoute<ProfileRoute>()) {
                             showProfileButton = false
                             showAddVisitButton = false
                             showAddTreeButton = false
                             showAddFruitButton = false
                             showLogoutButton = true
+                            showTakePictureVisitButton = false
                         }
 
                     }
 
                     val backStackEntry by navController.currentBackStackEntryAsState()
                     when {
+                        backStackEntry?.destination?.hasRoute<ShowVisitRoute>() == true -> {
+                            currentVisitUid = backStackEntry!!.toRoute<ShowVisitRoute>().uid
+                        }
                         backStackEntry?.destination?.hasRoute<ShowTreeRoute>() == true -> {
                             currentTreeUid = backStackEntry!!.toRoute<ShowTreeRoute>().uid
                         }
@@ -386,6 +525,19 @@ fun Navigator(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "AddVisitButton"
+                            )
+                        }
+                    }
+                    if (showTakePictureVisitButton) {
+                        IconButton(
+                            modifier = Modifier
+                                .semantics { contentDescription = "navigateToTakePictureVisit" },
+                            onClick = {
+                                takePictureVisit(currentVisitUid)
+                            }) {
+                            Icon(
+                                imageVector = Icons.Default.PhotoCamera,
+                                contentDescription = "TakePictureVisitButton"
                             )
                         }
                     }
@@ -547,6 +699,7 @@ fun Navigator(
                     networkService = networkService,
                     changeMessage = changeMessage,
                     navigateBack = navigateBack,
+                    getRefreshImagePagerVisit = getRefreshImagePagerVisit
                 )
             }
             // EDIT VISIT
@@ -640,6 +793,7 @@ fun Navigator(
                     changeMessage = changeMessage
                 )
             }
+
             // SCANNER
             composable<QRCodeScannerRoute> {
                 QRCodeScannerScreen(
